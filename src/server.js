@@ -8,6 +8,7 @@ const { Pool } = require('pg');
 const { Resend } = require('resend');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
+const path = require('path');
 
 // ── App setup ────────────────────────────────
 const app = express();
@@ -351,7 +352,7 @@ app.get('/admin', (req, res) => {
   res.sendFile(__dirname + '/../public/admin.html');
 });
 
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, '../public')));
 
 // ── Health check ──────────────────────────────
 app.get('/health', (req, res) => res.json({ ok: true }));
