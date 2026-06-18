@@ -1,0 +1,28 @@
+{
+  "name": "gochat-backend",
+  "version": "1.0.0",
+  "description": "GoChat live chat backend for Goidentity — Teams-integrated, Railway-hosted",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "migrate": "node src/migrate.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.16.0",
+    "pg": "^8.11.3",
+    "axios": "^1.6.7",
+    "resend": "^3.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.1",
+    "uuid": "^9.0.0",
+    "express-rate-limit": "^7.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
