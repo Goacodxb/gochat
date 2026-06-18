@@ -36,6 +36,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.set('trust proxy', 1);
 
 // ── Rate limiting ─────────────────────────────
 const limiter = rateLimit({ windowMs: 60_000, max: 60 });
@@ -349,9 +350,8 @@ app.post('/api/admin/availability', adminAuth, async (req, res) => {
 
 // Serve admin dashboard HTML
 app.get('/admin', (req, res) => {
-  res.sendFile(__dirname + '/../public/admin.html');
+  res.sendFile(path.resolve(__dirname, '..', 'public', 'admin.html'));
 });
-
 app.use(express.static(path.join(__dirname, '../public')));
 
 // ── Health check ──────────────────────────────
