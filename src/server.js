@@ -25,14 +25,11 @@ const pool = new Pool({
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ── CORS ──────────────────────────────────────
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim());
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error('Not allowed by CORS'));
-  },
+  origin: true,
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-secret'],
+  credentials: true,
 }));
 
 app.use(express.json());
