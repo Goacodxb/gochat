@@ -2,7 +2,7 @@
   'use strict';
 
   // ── Configuration — set your Railway backend URL here ──
-  var BACKEND_URL = 'https://YOUR-APP.railway.app'; // ← replace this
+var BACKEND_URL = 'https://gochat-production-bd48.up.railway.app';
   var POLL_INTERVAL = 30000; // check availability every 30s
   var MESSAGE_POLL = 3000;   // poll for new messages every 3s
 
