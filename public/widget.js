@@ -183,15 +183,15 @@
         </div>
         <div id="gc-form">
           <div>
-            <label class="gc-field-label" for="gc-name">Full name</label>
-            <input id="gc-name" type="text" placeholder="John Smith" required>
+         
+            <input id="gc-name" type="text" placeholder="Full name" required>
           </div>
           <div>
-            <label class="gc-field-label" for="gc-email">Email address</label>
-            <input id="gc-email" type="email" placeholder="john@company.com" required>
+            
+            <input id="gc-email" type="email" placeholder="Email address" required>
           </div>
           <div>
-            <label class="gc-field-label" for="gc-first-msg">How can we help?</label>
+           
             <textarea id="gc-first-msg" rows="3" placeholder="Tell us about your enquiry..."></textarea>
           </div>
           <button id="gc-send">➤ Start conversation</button>
