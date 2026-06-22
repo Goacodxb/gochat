@@ -1,3 +1,4 @@
+
 (function () {
   'use strict';
 
@@ -61,7 +62,6 @@
     #gc-close:hover { color: white; }
     #gc-body { padding: 16px; flex: 1; overflow-y: auto; }
     #gc-welcome-msg {
-      
       border-radius: 0 8px 8px 0; padding: 10px 0px;
       margin-bottom: 14px;
     }
@@ -69,6 +69,9 @@
     .gc-field-label {
       font-size: 11px; color: #6b7280; font-weight: 600;
       display: block; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.3px;
+    }
+    .gc-field-error {
+      color: #dc2626; font-size: 12px; margin: 4px 0 0 2px; display: none;
     }
     #gc-form { display: flex; flex-direction: column; gap: 10px; }
     #gc-form input, #gc-form textarea {
@@ -79,6 +82,9 @@
     #gc-form input:focus, #gc-form textarea:focus {
       outline: none; border-color: #0f1d3a;
       box-shadow: 0 0 0 2px rgba(15,29,58,0.1);
+    }
+    #gc-form input.gc-input-error, #gc-form textarea.gc-input-error {
+      border-color: #dc2626;
     }
     #gc-send {
       padding: 11px; background: #0f1d3a; color: white; border: none;
@@ -183,21 +189,20 @@
         </div>
         <div id="gc-form">
           <div>
-         
             <input id="gc-name" type="text" placeholder="Full name" required>
+            <p id="gc-name-error" class="gc-field-error">Please enter your name.</p>
           </div>
           <div>
-            
             <input id="gc-email" type="email" placeholder="Email address" required>
+            <p id="gc-email-error" class="gc-field-error">Please enter a valid email address.</p>
           </div>
           <div>
-           
             <textarea id="gc-first-msg" rows="3" placeholder="Tell us about your enquiry..."></textarea>
+            <p id="gc-msg-error" class="gc-field-error">Please describe your enquiry.</p>
           </div>
           <button id="gc-send">➤ Start conversation</button>
           <div id="gc-privacy">🔒 Your information is secure and private</div>
         </div>
-        <p id="gc-form-error" style="color:#dc2626;font-size:13px;margin-top:6px;display:none"></p>
       </div>
 
       <div id="gc-chat" style="display:none">
@@ -289,19 +294,33 @@
     var name = document.getElementById('gc-name').value.trim();
     var email = document.getElementById('gc-email').value.trim();
     var msg = document.getElementById('gc-first-msg').value.trim();
-    var errEl = document.getElementById('gc-form-error');
 
-    if (!name || !email || !msg) {
-      errEl.textContent = 'Please fill in all fields.';
-      errEl.style.display = 'block';
-      return;
+    // Clear all previous errors and red borders
+    document.querySelectorAll('.gc-field-error').forEach(function (el) { el.style.display = 'none'; });
+    document.getElementById('gc-name').classList.remove('gc-input-error');
+    document.getElementById('gc-email').classList.remove('gc-input-error');
+    document.getElementById('gc-first-msg').classList.remove('gc-input-error');
+
+    var hasError = false;
+
+    if (!name) {
+      document.getElementById('gc-name-error').style.display = 'block';
+      document.getElementById('gc-name').classList.add('gc-input-error');
+      hasError = true;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errEl.textContent = 'Please enter a valid email address.';
-      errEl.style.display = 'block';
-      return;
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      document.getElementById('gc-email-error').textContent = !email ? 'Please enter your email address.' : 'Please enter a valid email address.';
+      document.getElementById('gc-email-error').style.display = 'block';
+      document.getElementById('gc-email').classList.add('gc-input-error');
+      hasError = true;
     }
-    errEl.style.display = 'none';
+    if (!msg) {
+      document.getElementById('gc-msg-error').style.display = 'block';
+      document.getElementById('gc-first-msg').classList.add('gc-input-error');
+      hasError = true;
+    }
+    if (hasError) return;
+
     visitorName = name;
 
     var btn = document.getElementById('gc-send');
@@ -324,8 +343,8 @@
       .catch(function () {
         btn.disabled = false;
         btn.textContent = '➤ Start conversation';
-        errEl.textContent = 'Something went wrong. Please try again.';
-        errEl.style.display = 'block';
+        document.getElementById('gc-name-error').textContent = 'Something went wrong. Please try again.';
+        document.getElementById('gc-name-error').style.display = 'block';
       });
   });
 
