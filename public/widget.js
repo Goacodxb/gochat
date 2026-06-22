@@ -163,7 +163,7 @@
     <div id="gc-header">
       <div id="gc-header-left">
       <div id="gc-avatar">
-      <img src="https://github.com/Goacodxb/gochat/blob/45cf246be467f2f892199b53f2bf822889fe5ec8/public/img/goidentity.png" alt="GoIdentity">
+      <img src="https://github.com/Goacodxb/gochat/main/public/img/goidentity.png" alt="GoIdentity">
       </div>
         <div>
           <h3>GoIdentity Support</h3>
