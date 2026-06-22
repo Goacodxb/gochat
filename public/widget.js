@@ -21,7 +21,7 @@ var BACKEND_URL = 'https://gochat-production-bd48.up.railway.app';
     #gc-launcher {
       position: fixed; bottom: 24px; right: 24px; z-index: 9999;
       width: 56px; height: 56px; border-radius: 50%;
-      background: ##111d43; color: white; border: none; cursor: pointer;
+      background: #111e45; color: white; border: none; cursor: pointer;
       box-shadow: 0 4px 16px rgba(0,82,204,0.4);
       display: flex; align-items: center; justify-content: center;
       font-size: 24px; transition: transform 0.2s;
