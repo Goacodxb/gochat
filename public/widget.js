@@ -47,8 +47,8 @@ var BACKEND_URL = 'https://gochat-production-bd48.up.railway.app';
     #gc-body { padding: 16px; flex: 1; overflow-y: auto; }
     #gc-messages { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; min-height: 40px; }
     .gc-msg { max-width: 80%; padding: 8px 12px; border-radius: 8px; font-size: 14px; line-height: 1.4; }
-    .gc-msg.visitor { background: #0052cc; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
-    .gc-msg.agent { background: #f4f5f7; color: #172b4d; align-self: flex-start; border-bottom-left-radius: 2px; }
+    .gc-msg.visitor { background: #111e45; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+    .gc-msg.agent { background: #f4f5f7; color: #111e45; align-self: flex-start; border-bottom-left-radius: 2px; }
     .gc-msg .gc-sender { font-size: 11px; opacity: 0.7; margin-bottom: 2px; }
     #gc-form { display: flex; flex-direction: column; gap: 8px; }
     #gc-form input, #gc-form textarea {
@@ -57,22 +57,22 @@ var BACKEND_URL = 'https://gochat-production-bd48.up.railway.app';
     }
     #gc-form input:focus, #gc-form textarea:focus { outline: none; border-color: #0052cc; }
     #gc-send {
-      padding: 10px; background: #0052cc; color: white; border: none;
+      padding: 10px; background: #111e45; color: white; border: none;
       border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;
     }
-    #gc-send:hover { background: #0065ff; }
+    #gc-send:hover { background: #111e45; }
     #gc-send:disabled { opacity: 0.5; cursor: not-allowed; }
     #gc-chat-input { display: flex; gap: 8px; padding: 0 16px 16px; }
     #gc-chat-input input {
       flex: 1; padding: 9px 12px; border: 1px solid #dfe1e6;
       border-radius: 6px; font-size: 14px;
     }
-    #gc-chat-input input:focus { outline: none; border-color: #0052cc; }
+    #gc-chat-input input:focus { outline: none; border-color: #111e45; }
     #gc-chat-send {
-      padding: 9px 14px; background: #0052cc; color: white; border: none;
+      padding: 9px 14px; background: #111e45; color: white; border: none;
       border-radius: 6px; cursor: pointer; font-size: 14px;
     }
-    #gc-chat-send:hover { background: #0065ff; }
+    #gc-chat-send:hover { background: #111e45; }
     #gc-status { font-size: 13px; color: #6b778c; text-align: center; padding: 8px 0; }
     .gc-typing { font-size: 12px; color: #6b778c; padding: 0 16px 8px; }
   `;
