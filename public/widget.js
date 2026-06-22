@@ -37,7 +37,7 @@ var BACKEND_URL = 'https://gochat-production-bd48.up.railway.app';
     }
     #gc-widget.open { display: flex; }
     #gc-header {
-      background: #0052cc; color: white; padding: 14px 16px;
+      background: #111e45;; color: white; padding: 14px 16px;
       display: flex; justify-content: space-between; align-items: center;
     }
     #gc-header h3 { font-size: 15px; font-weight: 600; margin: 0; }
@@ -92,7 +92,7 @@ var BACKEND_URL = 'https://gochat-production-bd48.up.railway.app';
   widget.innerHTML = `
     <div id="gc-header">
       <div>
-        <h3>Chat with us</h3>
+        <h3>Chat with goidentity</h3>
         <p id="gc-header-status">Checking availability...</p>
       </div>
       <button id="gc-close" aria-label="Close chat">×</button>
