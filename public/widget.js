@@ -162,7 +162,9 @@
   widget.innerHTML = `
     <div id="gc-header">
       <div id="gc-header-left">
-        <div id="gc-avatar">👩‍💼</div>
+      <div id="gc-avatar">
+        <img src="/goidentity.png" alt="GoIdentity">
+      </div>
         <div>
           <h3>GoIdentity Support</h3>
           <div id="gc-header-status">
