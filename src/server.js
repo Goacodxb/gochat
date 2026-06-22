@@ -9,6 +9,8 @@ const { Resend } = require('resend');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
+const { BotFrameworkAdapter } = require('botbuilder');
+const { GoChatBot } = require('./bot');
 
 // ── App setup ────────────────────────────────
 const app = express();
@@ -350,7 +352,20 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.resolve(__dirname, '..', 'public', 'admin.html'));
 });
 app.use(express.static(path.join(__dirname, '../public')));
+// ── Azure Bot Framework ───────────────────────
+const adapter = new BotFrameworkAdapter({
+  appId: process.env.TEAMS_APP_ID,
+  appPassword: process.env.TEAMS_APP_PASSWORD,
+});
 
+global.sessionClients = sessionClients;
+const bot = new GoChatBot();
+
+app.post('/api/messages', (req, res) => {
+  adapter.processActivity(req, res, async (context) => {
+    await bot.run(context);
+  });
+});
 // ── Health check ──────────────────────────────
 app.get('/health', (req, res) => res.json({ ok: true }));
 
