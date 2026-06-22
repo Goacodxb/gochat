@@ -61,11 +61,11 @@
     #gc-close:hover { color: white; }
     #gc-body { padding: 16px; flex: 1; overflow-y: auto; }
     #gc-welcome-msg {
-      background: #eff6ff; border-left: 3px solid #3b82f6;
-      border-radius: 0 8px 8px 0; padding: 10px 12px;
+      
+      border-radius: 0 8px 8px 0; padding: 10px 0px;
       margin-bottom: 14px;
     }
-    #gc-welcome-msg p { font-size: 13px; color: #1e40af; margin: 0; }
+    #gc-welcome-msg p { font-size: 13px; color: ##0f1d3a; margin: 0; }
     .gc-field-label {
       font-size: 11px; color: #6b7280; font-weight: 600;
       display: block; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.3px;
