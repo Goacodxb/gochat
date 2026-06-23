@@ -354,8 +354,7 @@
         if (!d.sessionId) throw new Error('No session ID returned');
         sessionId = d.sessionId;
         showChatView(name, msg);
-        connectWebSocket();
-        startMessagePolling();
+        connectWebSocket(); // polling starts automatically if WebSocket fails
       })
       .catch(function () {
         btn.disabled = false;
@@ -416,16 +415,25 @@
   });
 
   // ── WebSocket ──────────────────────────────────────────
+  var wsConnected = false;
+
   function connectWebSocket() {
     if (!sessionId) return;
     var wsUrl = BACKEND_URL.replace(/^http/, 'ws') + '?sessionId=' + sessionId;
     ws = new WebSocket(wsUrl);
+
+    ws.onopen = function () {
+      wsConnected = true;
+      stopMessagePolling();
+    };
+
     ws.onmessage = function (e) {
       try {
         var data = JSON.parse(e.data);
         if (data.type === 'agent_message') {
           if (!agentJoined) onAgentJoined(data.senderName || 'Agent');
           addMessage('agent', data.senderName || 'Agent', data.content);
+          lastMessageTime = new Date().toISOString();
           document.getElementById('gc-chat-status').textContent = '';
         } else if (data.type === 'agent_joined') {
           onAgentJoined(data.agentName || 'Agent');
@@ -434,15 +442,15 @@
         }
       } catch (err) { console.error(err); }
     };
-    ws.onerror = function () { startMessagePolling(); };
-    ws.onclose = function () { startMessagePolling(); };
+    ws.onerror = function () { wsConnected = false; startMessagePolling(); };
+    ws.onclose = function () { wsConnected = false; startMessagePolling(); };
   }
 
-  // ── Long-poll fallback ────────────────────────────────
+  // ── Long-poll fallback (only when WebSocket fails) ────────────────────────────────
   function startMessagePolling() {
-    if (messagePoller) return;
+    if (messagePoller || wsConnected) return;
     messagePoller = setInterval(function () {
-      if (!sessionId) return;
+      if (!sessionId || wsConnected) return;
       fetch(BACKEND_URL + '/api/sessions/' + sessionId + '/messages?since=' + encodeURIComponent(lastMessageTime))
         .then(function (r) { return r.json(); })
         .then(function (d) {
