@@ -7,18 +7,18 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f5f7; color: #172b4d; }
-  .header { background: #0052cc; color: white; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+  .header { background: #0f1d3a; color: white; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
   .header h1 { font-size: 18px; font-weight: 600; }
   .header span { opacity: 0.7; font-size: 14px; }
   .login { max-width: 400px; margin: 80px auto; background: white; border-radius: 8px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
   .login h2 { margin-bottom: 20px; font-size: 20px; }
   .login input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; margin-bottom: 12px; }
-  .login button { width: 100%; padding: 10px; background: #0052cc; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }
-  .login button:hover { background: #0065ff; }
+  .login button { width: 100%; padding: 10px; background: #0f1d3a; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }
+  .login button:hover { background: #1a2f5a; }
   .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
   .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; }
   .tab { padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; font-size: 14px; font-weight: 500; color: #6b778c; }
-  .tab.active { color: #0052cc; border-bottom-color: #0052cc; }
+  .tab.active { color: #0f1d3a; border-bottom-color: #0f1d3a; }
   .card { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
   th { background: #f4f5f7; padding: 10px 16px; text-align: left; font-weight: 600; color: #6b778c; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -29,28 +29,40 @@
   .badge.active { background: #e3fcef; color: #006644; }
   .badge.closed { background: #f4f5f7; color: #6b778c; }
   .btn { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; }
-  .btn-primary { background: #0052cc; color: white; }
-  .btn-primary:hover { background: #0065ff; }
+  .btn-primary { background: #0f1d3a; color: white; }
+  .btn-primary:hover { background: #1a2f5a; }
+  .btn-danger { background: #de350b; color: white; }
+  .btn-danger:hover { background: #bf2600; }
   .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
   .modal.open { display: flex; }
-  .modal-box { background: white; border-radius: 8px; width: 620px; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column; }
+  .modal-box { background: white; border-radius: 8px; width: 640px; max-height: 85vh; overflow: hidden; display: flex; flex-direction: column; }
   .modal-header { padding: 16px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
   .modal-header h3 { font-size: 16px; }
+  .modal-header-info { font-size: 12px; color: #6b778c; margin-top: 2px; }
   .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #6b778c; }
   .modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
   .message { margin-bottom: 12px; }
   .message .meta { font-size: 11px; color: #6b778c; margin-bottom: 2px; }
   .message .bubble { display: inline-block; padding: 8px 12px; border-radius: 8px; max-width: 80%; font-size: 14px; line-height: 1.4; }
-  .message.visitor .bubble { background: #f4f5f7; }
-  .message.agent .bubble { background: #deebff; margin-left: auto; display: block; }
+  .message.visitor .bubble { background: #f4f5f7; color: #172b4d; }
+  .message.agent .bubble { background: #0f1d3a; color: white; margin-left: auto; display: block; }
   .message.agent { text-align: right; }
+  .modal-reply { padding: 12px 16px; border-top: 2px solid #f0f0f0; background: #fafbfc; }
+  .modal-reply-label { font-size: 11px; color: #6b778c; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; }
+  .modal-reply-box { display: flex; gap: 8px; align-items: flex-end; }
+  .modal-reply-box textarea { flex: 1; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-family: inherit; resize: none; min-height: 40px; max-height: 120px; }
+  .modal-reply-box textarea:focus { outline: none; border-color: #0f1d3a; }
+  .modal-reply-actions { display: flex; gap: 8px; align-items: center; }
   .empty { padding: 40px; text-align: center; color: #6b778c; font-size: 14px; }
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
   .stat { background: white; border-radius: 8px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-  .stat .num { font-size: 28px; font-weight: 700; color: #0052cc; }
+  .stat .num { font-size: 28px; font-weight: 700; color: #0f1d3a; }
   .stat .label { font-size: 12px; color: #6b778c; margin-top: 2px; }
+  .session-status-active { border-left: 3px solid #36b37e; }
+  .session-status-waiting { border-left: 3px solid #ffab00; }
   #loginScreen { display: block; }
   #appScreen { display: none; }
+  .reply-sent { color: #006644; font-size: 12px; display: none; }
 </style>
 </head>
 <body>
@@ -71,7 +83,7 @@
     <span>Goidentity live chat dashboard</span>
     <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
       <span id="availBadge" style="font-size:13px;padding:4px 10px;border-radius:12px;"></span>
-      <button class="btn" style="background:white;color:#0052cc;" onclick="toggleAvailability()">Toggle availability</button>
+      <button class="btn" style="background:white;color:#0f1d3a;" onclick="toggleAvailability()">Toggle availability</button>
     </div>
   </div>
 
@@ -104,20 +116,40 @@
   </div>
 </div>
 
-<!-- Chat history modal -->
+<!-- Chat modal with reply -->
 <div class="modal" id="chatModal">
   <div class="modal-box">
     <div class="modal-header">
-      <h3 id="modalTitle">Chat history</h3>
-      <button class="modal-close" onclick="closeModal()">×</button>
+      <div>
+        <h3 id="modalTitle">Chat history</h3>
+        <div class="modal-header-info" id="modalInfo"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-danger" id="closeSessionBtn" onclick="closeSession()" style="display:none">End chat</button>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
     </div>
     <div class="modal-body" id="modalBody"></div>
+    <!-- Reply box — only shown for active/waiting sessions -->
+    <div class="modal-reply" id="modalReply" style="display:none">
+      <div class="modal-reply-label">Reply to visitor</div>
+      <div class="modal-reply-box">
+        <textarea id="replyInput" placeholder="Type your reply..." rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendReply()}"></textarea>
+        <div class="modal-reply-actions">
+          <button class="btn btn-primary" onclick="sendReply()">Send ➤</button>
+        </div>
+      </div>
+      <p class="reply-sent" id="replySent">✅ Reply sent!</p>
+    </div>
   </div>
 </div>
 
 <script>
 let adminSecret = '';
 let availability = false;
+let currentSessionId = null;
+let currentSessionStatus = null;
+let messageRefreshInterval = null;
 
 function login() {
   adminSecret = document.getElementById('secretInput').value;
@@ -127,7 +159,7 @@ function login() {
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('appScreen').style.display = 'block';
       loadAll();
-      setInterval(loadAll, 15000);
+      setInterval(loadAll, 10000);
     });
 }
 
@@ -169,13 +201,17 @@ function loadSessions() {
       document.getElementById('statWaiting').textContent = sessions.filter(s => s.status === 'waiting').length;
       if (!sessions.length) { body.innerHTML = '<tr><td colspan="6" class="empty">No chats yet</td></tr>'; return; }
       body.innerHTML = sessions.map(s => `
-        <tr>
-          <td>${esc(s.visitor_name)}</td>
+        <tr class="${s.status === 'active' ? 'session-status-active' : s.status === 'waiting' ? 'session-status-waiting' : ''}">
+          <td><strong>${esc(s.visitor_name)}</strong></td>
           <td>${esc(s.visitor_email)}</td>
           <td><span class="badge ${s.status}">${s.status}</span></td>
           <td>${s.claimed_by ? esc(s.claimed_by) : '<span style="color:#6b778c">Unclaimed</span>'}</td>
           <td>${formatDate(s.created_at)}</td>
-          <td><button class="btn btn-primary" onclick="viewChat('${s.id}','${esc(s.visitor_name)}')">View</button></td>
+          <td>
+            <button class="btn btn-primary" onclick="viewChat('${s.id}','${esc(s.visitor_name)}','${esc(s.visitor_email)}','${s.status}')">
+              ${s.status === 'active' || s.status === 'waiting' ? '💬 Reply' : '👁 View'}
+            </button>
+          </td>
         </tr>`).join('');
     });
 }
@@ -198,24 +234,103 @@ function loadLeads() {
     });
 }
 
-function viewChat(sessionId, name) {
+function viewChat(sessionId, name, email, status) {
+  currentSessionId = sessionId;
+  currentSessionStatus = status;
+
   document.getElementById('modalTitle').textContent = `Chat with ${name}`;
-  document.getElementById('modalBody').innerHTML = '<p style="color:#6b778c;font-size:14px">Loading...</p>';
+  document.getElementById('modalInfo').textContent = email;
+  document.getElementById('modalBody').innerHTML = '<p style="color:#6b778c;font-size:14px;padding:8px 0">Loading...</p>';
   document.getElementById('chatModal').classList.add('open');
+
+  // Show reply box only for active or waiting sessions
+  const isLive = status === 'active' || status === 'waiting';
+  document.getElementById('modalReply').style.display = isLive ? '' : 'none';
+  document.getElementById('closeSessionBtn').style.display = isLive ? '' : 'none';
+  document.getElementById('replySent').style.display = 'none';
+
+  loadMessages(sessionId);
+
+  // Auto refresh messages every 3 seconds if chat is live
+  if (messageRefreshInterval) clearInterval(messageRefreshInterval);
+  if (isLive) {
+    messageRefreshInterval = setInterval(() => loadMessages(sessionId), 3000);
+  }
+}
+
+function loadMessages(sessionId) {
   fetch(`/api/admin/sessions/${sessionId}`, { headers: { 'x-admin-secret': adminSecret } })
     .then(r => r.json())
     .then(d => {
       const msgs = d.messages || [];
-      if (!msgs.length) { document.getElementById('modalBody').innerHTML = '<p class="empty">No messages</p>'; return; }
-      document.getElementById('modalBody').innerHTML = msgs.map(m => `
+      const body = document.getElementById('modalBody');
+      if (!msgs.length) {
+        body.innerHTML = '<p class="empty">No messages yet</p>';
+        return;
+      }
+      const scrolledToBottom = body.scrollHeight - body.scrollTop === body.clientHeight;
+      body.innerHTML = msgs.map(m => `
         <div class="message ${m.sender_type}">
           <div class="meta">${esc(m.sender_name)} · ${formatDate(m.created_at)}</div>
           <div class="bubble">${esc(m.content)}</div>
         </div>`).join('');
+      // Auto scroll to bottom
+      body.scrollTop = body.scrollHeight;
     });
 }
 
-function closeModal() { document.getElementById('chatModal').classList.remove('open'); }
+function sendReply() {
+  const input = document.getElementById('replyInput');
+  const content = input.value.trim();
+  if (!content || !currentSessionId) return;
+
+  const btn = document.querySelector('#modalReply .btn-primary');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+
+  fetch(`/api/admin/reply`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+    body: JSON.stringify({ sessionId: currentSessionId, content: content, agentName: 'Agent' })
+  })
+  .then(r => r.json())
+  .then(d => {
+    input.value = '';
+    btn.disabled = false;
+    btn.textContent = 'Send ➤';
+    document.getElementById('replySent').style.display = 'block';
+    setTimeout(() => document.getElementById('replySent').style.display = 'none', 2000);
+    loadMessages(currentSessionId);
+  })
+  .catch(() => {
+    btn.disabled = false;
+    btn.textContent = 'Send ➤';
+  });
+}
+
+function closeSession() {
+  if (!currentSessionId) return;
+  if (!confirm('Are you sure you want to end this chat?')) return;
+
+  fetch(`/api/admin/close`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+    body: JSON.stringify({ sessionId: currentSessionId })
+  })
+  .then(() => {
+    closeModal();
+    loadAll();
+  });
+}
+
+function closeModal() {
+  document.getElementById('chatModal').classList.remove('open');
+  if (messageRefreshInterval) {
+    clearInterval(messageRefreshInterval);
+    messageRefreshInterval = null;
+  }
+  currentSessionId = null;
+}
 
 function showTab(tab, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -236,3 +351,4 @@ window.onclick = e => { if (e.target === document.getElementById('chatModal')) c
 </script>
 </body>
 </html>
+
