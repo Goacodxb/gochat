@@ -328,6 +328,60 @@ app.get('/api/admin/leads', adminAuth, async (req, res) => {
   }
 });
 
+// POST /api/admin/reply — agent replies from dashboard
+app.post('/api/admin/reply', adminAuth, async (req, res) => {
+  const { sessionId, content, agentName } = req.body;
+  if (!sessionId || !content) return res.status(400).json({ error: 'sessionId and content required' });
+  try {
+    const session = await pool.query('SELECT * FROM sessions WHERE id = $1', [sessionId]);
+    if (!session.rows.length) return res.status(404).json({ error: 'Session not found' });
+    if (session.rows[0].status === 'closed') return res.status(400).json({ error: 'Session is closed' });
+
+    // If session is waiting, claim it first
+    if (session.rows[0].status === 'waiting') {
+      await pool.query(
+        `UPDATE sessions SET status = 'active', claimed_by = $1, updated_at = NOW() WHERE id = $2`,
+        [agentName || 'Agent', sessionId]
+      );
+      broadcastToSession(sessionId, { type: 'agent_joined', agentName: agentName || 'Agent' });
+    }
+
+    // Save message
+    await pool.query(
+      `INSERT INTO messages (session_id, sender_type, sender_name, content) VALUES ($1, 'agent', $2, $3)`,
+      [sessionId, agentName || 'Agent', content.trim()]
+    );
+
+    // Push to visitor via WebSocket
+    broadcastToSession(sessionId, {
+      type: 'agent_message',
+      content: content.trim(),
+      senderName: agentName || 'Agent',
+    });
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to send reply' });
+  }
+});
+
+// POST /api/admin/close — close session from dashboard
+app.post('/api/admin/close', adminAuth, async (req, res) => {
+  const { sessionId } = req.body;
+  if (!sessionId) return res.status(400).json({ error: 'sessionId required' });
+  try {
+    await pool.query(
+      `UPDATE sessions SET status = 'closed', closed_at = NOW(), updated_at = NOW() WHERE id = $1`,
+      [sessionId]
+    );
+    broadcastToSession(sessionId, { type: 'session_closed' });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to close session' });
+  }
+});
+
 // POST /api/admin/availability — toggle from dashboard
 app.post('/api/admin/availability', adminAuth, async (req, res) => {
   const { online } = req.body;
