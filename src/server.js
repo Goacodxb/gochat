@@ -27,13 +27,8 @@ const pool = new Pool({
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ── CORS ──────────────────────────────────────
-app.use(cors({
-  origin: true,
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-secret'],
-  credentials: true,
-}));
-
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim());
+app.use(cors({ origin: true, methods: ['GET', 'POST', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-secret'], credentials: true }));
 app.use(express.json());
 app.set('trust proxy', 1);
 
@@ -351,7 +346,9 @@ app.post('/api/admin/availability', adminAuth, async (req, res) => {
 app.get('/admin', (req, res) => {
   res.sendFile(path.resolve(__dirname, '..', 'public', 'admin.html'));
 });
+
 app.use(express.static(path.join(__dirname, '../public')));
+
 // ── Azure Bot Framework ───────────────────────
 const adapter = new BotFrameworkAdapter({
   appId: process.env.TEAMS_APP_ID,
@@ -366,6 +363,7 @@ app.post('/api/messages', (req, res) => {
     await bot.run(context);
   });
 });
+
 // ── Health check ──────────────────────────────
 app.get('/health', (req, res) => res.json({ ok: true }));
 
@@ -426,9 +424,11 @@ async function postToTeams(sessionId, name, email, message) {
 
 async function replyToTeamsThread(session, message, senderName) {
   if (!process.env.TEAMS_WEBHOOK_URL) return;
+  // Post visitor follow-up message to Teams
+  // Format: show visitor name and message clearly
   const card = {
     type: 'message',
-    text: `**${senderName}:** ${message}`,
+    text: `💬 **${senderName}:** ${message}\n\n_Session: ${session.id}_`,
   };
   await axios.post(process.env.TEAMS_WEBHOOK_URL, card).catch(console.error);
 }
