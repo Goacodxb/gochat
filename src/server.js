@@ -415,6 +415,9 @@ const bot = new GoChatBot();
 app.post('/api/messages', (req, res) => {
   adapter.processActivity(req, res, async (context) => {
     await bot.run(context);
+  }).catch(err => {
+    console.error('Bot Framework error:', err.message);
+    res.status(500).send(err.message);
   });
 });
 
