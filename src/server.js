@@ -412,13 +412,16 @@ const adapter = new BotFrameworkAdapter({
 global.sessionClients = sessionClients;
 const bot = new GoChatBot();
 
-app.post('/api/messages', (req, res) => {
-  adapter.processActivity(req, res, async (context) => {
-    await bot.run(context);
-  }).catch(err => {
+app.post('/api/messages', async (req, res) => {
+  console.log('Received at /api/messages:', JSON.stringify(req.body));
+  try {
+    await adapter.processActivity(req, res, async (context) => {
+      await bot.run(context);
+    });
+  } catch (err) {
     console.error('Bot Framework error:', err.message);
-    res.status(500).send(err.message);
-  });
+    res.status(200).send('ok');
+  }
 });
 
 // ── Health check ──────────────────────────────
