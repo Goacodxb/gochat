@@ -22,7 +22,7 @@ class GoChatBot extends ActivityHandler {
       text = text.replace(/<at>[^<]*<\/at>/gi, '').trim();
 
       // Ignore empty or bot confirmation messages
-      if (!text || text.startsWith('✅') || text.startsWith('❌') || text.startsWith('⚠️') || text.startsWith('👋')) {
+      if (!text || text.startsWith('✅') || text.startsWith('❌') || text.startsWith('⚠️') || text.startsWith('👋') || text.startsWith('💬')) {
         await next();
         return;
       }
@@ -30,7 +30,11 @@ class GoChatBot extends ActivityHandler {
       const from = context.activity.from?.name || 'Agent';
       console.log('Bot received clean message:', text, 'from:', from);
 
-      // Handle commands - no sendActivity to avoid 401 loop
+      // Get Teams conversation ID to find session
+      const teamsConversationId = context.activity.conversation?.id;
+      console.log('Teams conversation ID:', teamsConversationId);
+
+      // Handle commands
       if (text === '/goonline') {
         await pool.query('UPDATE availability SET is_online = true, updated_at = NOW() WHERE id = 1');
         console.log('GoChat set ONLINE');
@@ -45,11 +49,24 @@ class GoChatBot extends ActivityHandler {
         return;
       }
 
-      // Extract session ID
-      const sessionId = extractSessionId(text);
+      // Try to find session ID from message first
+      let sessionId = extractSessionId(text);
+
+      // If no session ID in message, look up by Teams conversation ID
+      if (!sessionId && teamsConversationId) {
+        const sessionByThread = await pool.query(
+          `SELECT id FROM sessions WHERE teams_thread_id = $1 AND status != 'closed' ORDER BY created_at DESC LIMIT 1`,
+          [teamsConversationId]
+        ).catch(() => ({ rows: [] }));
+
+        if (sessionByThread.rows.length > 0) {
+          sessionId = sessionByThread.rows[0].id;
+          console.log('Found session by Teams conversation ID:', sessionId);
+        }
+      }
 
       if (!sessionId) {
-        console.log('No session ID found in message');
+        console.log('No session found for this conversation');
         await next();
         return;
       }
@@ -66,7 +83,7 @@ class GoChatBot extends ActivityHandler {
         return;
       }
 
-      // Extract message after session ID
+      // Extract message — remove session ID if present
       const messageContent = text.replace(sessionId, '').trim();
 
       if (!messageContent) {
@@ -78,16 +95,19 @@ class GoChatBot extends ActivityHandler {
       try {
         const session = await pool.query('SELECT * FROM sessions WHERE id = $1', [sessionId]);
 
-        if (!session.rows.length) {
-          console.log('Session not found:', sessionId);
+        if (!session.rows.length || session.rows[0].status === 'closed') {
+          console.log('Session not found or closed:', sessionId);
           await next();
           return;
         }
 
-        if (session.rows[0].status === 'closed') {
-          console.log('Session already closed:', sessionId);
-          await next();
-          return;
+        // Save Teams conversation ID for future replies without session ID
+        if (teamsConversationId && !session.rows[0].teams_thread_id) {
+          await pool.query(
+            `UPDATE sessions SET teams_thread_id = $1 WHERE id = $2`,
+            [teamsConversationId, sessionId]
+          );
+          console.log('Saved Teams conversation ID for session');
         }
 
         // Claim if waiting
