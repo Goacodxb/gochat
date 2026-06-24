@@ -1,4 +1,4 @@
-const { ActivityHandler, TurnContext } = require('botbuilder');
+const { ActivityHandler } = require('botbuilder');
 const { Pool } = require('pg');
 
 const pool = new Pool({
@@ -10,33 +10,34 @@ class GoChatBot extends ActivityHandler {
   constructor() {
     super();
 
-    // Handle messages sent to the bot
     this.onMessage(async (context, next) => {
-      const text = (context.activity.text || '').trim();
+      // Remove @mentions and clean the text
+      let text = (context.activity.text || '');
+      // Remove all <at>...</at> tags
+      text = text.replace(/<at>[^<]*<\/at>/gi, '').trim();
+      
       const from = context.activity.from?.name || 'Agent';
 
-      console.log('Bot received message:', text, 'from:', from);
+      console.log('Bot received clean message:', text, 'from:', from);
 
       // Handle availability commands
       if (text === '/goonline') {
         await pool.query('UPDATE availability SET is_online = true, updated_at = NOW() WHERE id = 1');
-        await context.sendActivity('✅ GoChat is now ONLINE — visitors will see live chat');
+        await context.sendActivity('✅ GoChat is now ONLINE');
         return;
       }
 
       if (text === '/gooffline') {
         await pool.query('UPDATE availability SET is_online = false, updated_at = NOW() WHERE id = 1');
-        await context.sendActivity('✅ GoChat is now OFFLINE — visitors will see lead form');
+        await context.sendActivity('✅ GoChat is now OFFLINE');
         return;
       }
 
-      // Extract session ID from message
+      // Extract session ID
       const sessionId = extractSessionId(text);
 
       if (!sessionId) {
-        // No session ID — check if it's a reply to a known session
-        // Try to find active session for this agent
-        await next();
+        await context.sendActivity('⚠️ Please include a Session ID.\nExample: `SESSION-ID your message`');
         return;
       }
 
@@ -51,11 +52,11 @@ class GoChatBot extends ActivityHandler {
         return;
       }
 
-      // Regular reply — extract the message after the session ID
+      // Extract message after session ID
       const messageContent = text.replace(sessionId, '').trim();
 
       if (!messageContent) {
-        await context.sendActivity('Please include a message after the Session ID. Example:\n`' + sessionId + ' Hello, how can I help?`');
+        await context.sendActivity('⚠️ Please include a message after the Session ID.');
         return;
       }
 
@@ -81,13 +82,25 @@ class GoChatBot extends ActivityHandler {
           broadcastToSession(sessionId, { type: 'agent_joined', agentName: from });
         }
 
-        // Save message to database
+        // Check if message already saved (prevent duplicates)
+        const existing = await pool.query(
+          `SELECT id FROM messages WHERE session_id=$1 AND sender_name=$2 AND content=$3 
+           AND created_at > NOW() - INTERVAL '5 seconds'`,
+          [sessionId, from, messageContent]
+        );
+
+        if (existing.rows.length > 0) {
+          console.log('Duplicate message detected, skipping');
+          return;
+        }
+
+        // Save message
         await pool.query(
           `INSERT INTO messages (session_id, sender_type, sender_name, content) VALUES ($1, 'agent', $2, $3)`,
           [sessionId, from, messageContent]
         );
 
-        // Push to visitor via WebSocket
+        // Push to visitor
         broadcastToSession(sessionId, {
           type: 'agent_message',
           content: messageContent,
@@ -95,28 +108,22 @@ class GoChatBot extends ActivityHandler {
         });
 
         await context.sendActivity('✅ Reply sent to visitor!');
+        console.log('Reply sent to visitor:', messageContent);
 
       } catch (err) {
         console.error('Bot error:', err);
-        await context.sendActivity('❌ Error sending reply: ' + err.message);
+        await context.sendActivity('❌ Error: ' + err.message);
       }
 
       await next();
     });
 
-    // Welcome message when bot is added to a team
     this.onMembersAdded(async (context, next) => {
       const membersAdded = context.activity.membersAdded;
       for (const member of membersAdded) {
         if (member.id !== context.activity.recipient.id) {
           await context.sendActivity(
-            '👋 GoChat Bot is ready!\n\n' +
-            'To reply to a visitor, type:\n' +
-            '`<Session ID> <your message>`\n\n' +
-            'Commands:\n' +
-            '• `/goonline` — set agents online\n' +
-            '• `/gooffline` — set agents offline\n' +
-            '• `<Session ID> /close` — end a chat'
+            '👋 GoChat Bot ready!\n\nTo reply: `SESSION-ID your message`\n\nCommands:\n• `/goonline` — set online\n• `/gooffline` — set offline\n• `SESSION-ID /close` — end chat'
           );
         }
       }
