@@ -31,7 +31,9 @@ class GoChatBot extends ActivityHandler {
       console.log('Bot received clean message:', text, 'from:', from);
 
       // Get Teams conversation ID to find session
-      const teamsConversationId = context.activity.conversation?.id;
+      // Remove messageid suffix from conversation ID for consistent matching
+const rawConversationId = context.activity.conversation?.id || '';
+const teamsConversationId = rawConversationId.split(';messageid=')[0];
       console.log('Teams conversation ID:', teamsConversationId);
 
       // Handle commands
