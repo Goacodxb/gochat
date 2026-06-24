@@ -426,54 +426,81 @@ app.get('/health', (req, res) => res.json({ ok: true }));
 // ═══════════════════════════════════════════════
 
 async function postToTeams(sessionId, name, email, message) {
-  if (!process.env.TEAMS_WEBHOOK_URL) return;
+  // Use Bot Framework to post proactive message to Teams
+  // This creates a real bot conversation so replies come back to /api/messages
+  if (!process.env.TEAMS_APP_ID || !process.env.TEAMS_APP_PASSWORD) {
+    // Fallback to webhook if bot not configured
+    if (process.env.TEAMS_WEBHOOK_URL) {
+      const card = {
+        type: 'message',
+        text: `💬 **New chat from website visitor**\n\n**Name:** ${name}\n**Email:** ${email}\n**Session ID:** ${sessionId}\n**Message:** "${message}"\n\nTo reply, type the Session ID followed by your message in this channel.`,
+      };
+      await axios.post(process.env.TEAMS_WEBHOOK_URL, card).catch(console.error);
+    }
+    return;
+  }
 
-  const card = {
-    type: 'message',
-    attachments: [{
-      contentType: 'application/vnd.microsoft.card.adaptive',
-      content: {
-        $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
-        type: 'AdaptiveCard',
-        version: '1.4',
-        body: [
-          {
-            type: 'TextBlock',
-            text: '💬 New chat from website visitor',
-            weight: 'Bolder',
-            size: 'Medium',
-            color: 'Accent',
-          },
-          {
-            type: 'FactSet',
-            facts: [
-              { title: 'Name', value: name },
-              { title: 'Email', value: email },
-              { title: 'Session ID', value: sessionId },
-            ],
-          },
-          {
-            type: 'TextBlock',
-            text: `"${message}"`,
-            wrap: true,
-            isSubtle: true,
-          },
-        ],
-        actions: [
-          {
-            type: 'Action.Http',
-            title: '✋ Claim this chat',
-            method: 'POST',
-            url: `${getBackendUrl()}/api/teams/claim`,
-            headers: [{ name: 'Content-Type', value: 'application/json' }],
-            body: JSON.stringify({ value: { sessionId, agentName: '{{agentName}}' } }),
-          },
-        ],
-      },
-    }],
-  };
+  try {
+    // Get bot token
+    const tokenResponse = await axios.post(
+      `https://login.microsoftonline.com/${process.env.APP_TENANT_ID || 'botframework.com'}/oauth2/v2.0/token`,
+      new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: process.env.TEAMS_APP_ID,
+        client_secret: process.env.TEAMS_APP_PASSWORD,
+        scope: 'https://api.botframework.com/.default'
+      }),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    );
 
-  await axios.post(process.env.TEAMS_WEBHOOK_URL, card).catch(console.error);
+    const token = tokenResponse.data.access_token;
+
+    // Post to Teams channel via Bot Framework
+    const channelId = process.env.TEAMS_CHANNEL_ID;
+    const serviceUrl = process.env.TEAMS_SERVICE_URL || 'https://smba.trafficmanager.net/uk/';
+
+    if (!channelId) {
+      // Fallback to webhook
+      if (process.env.TEAMS_WEBHOOK_URL) {
+        const card = {
+          type: 'message',
+          text: `💬 **New chat**\n**Name:** ${name}\n**Email:** ${email}\n**Session:** ${sessionId}\n"${message}"`,
+        };
+        await axios.post(process.env.TEAMS_WEBHOOK_URL, card).catch(console.error);
+      }
+      return;
+    }
+
+    const activity = {
+      type: 'message',
+      text: `💬 New chat from ${name} (${email})\nSession: ${sessionId}\n"${message}"\n\nReply with: ${sessionId} <your message>`,
+    };
+
+    const response = await axios.post(
+      `${serviceUrl}v3/conversations/${channelId}/activities`,
+      activity,
+      { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+    );
+
+    // Save conversation reference for future replies
+    if (response.data?.id) {
+      await pool.query(
+        'UPDATE sessions SET teams_activity_id = $1 WHERE id = $2',
+        [response.data.id, sessionId]
+      ).catch(console.error);
+    }
+
+  } catch (err) {
+    console.error('Bot Framework error:', err.message);
+    // Fallback to webhook
+    if (process.env.TEAMS_WEBHOOK_URL) {
+      const card = {
+        type: 'message',
+        text: `💬 **New chat**\n**Name:** ${name}\n**Email:** ${email}\n**Session:** ${sessionId}\n"${message}"\n\nReply with: ${sessionId} <your message>`,
+      };
+      await axios.post(process.env.TEAMS_WEBHOOK_URL, card).catch(console.error);
+    }
+  }
 }
 
 async function replyToTeamsThread(session, message, senderName) {
