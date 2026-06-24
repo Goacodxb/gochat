@@ -13,10 +13,6 @@ class GoChatBot extends ActivityHandler {
     this.onMessage(async (context, next) => {
       // Remove @mentions and clean the text
       let text = (context.activity.text || '');
-      // Ignore messages from the bot itself
-  if (context.activity.from?.id === context.activity.recipient?.id) return;
-  // Ignore bot confirmation messages
-  if (text.includes('✅') || text.includes('❌') || text.includes('⚠️')) return;
       // Remove all <at>...</at> tags
       text = text.replace(/<at>[^<]*<\/at>/gi, '').trim();
       
