@@ -323,7 +323,34 @@ async function replyToTeamsThread(session, message, senderName) {
   console.log('Sending visitor follow-up to Teams:', message);
   const card = {
     type: 'message',
-    text: `💬 **${senderName}:** ${message}\n\n_Session: ${session.id}_`,
+    attachments: [{
+      contentType: 'application/vnd.microsoft.card.adaptive',
+      content: {
+        $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+        type: 'AdaptiveCard',
+        version: '1.4',
+        body: [
+          {
+            type: 'TextBlock',
+            text: `💬 ${senderName} (visitor)`,
+            weight: 'Bolder',
+            color: 'Accent',
+          },
+          {
+            type: 'TextBlock',
+            text: message,
+            wrap: true,
+          },
+          {
+            type: 'TextBlock',
+            text: `To reply: @GoChat ${session.id} <your message>`,
+            wrap: true,
+            isSubtle: true,
+            size: 'Small',
+          },
+        ],
+      },
+    }],
   };
   await axios.post(process.env.TEAMS_WEBHOOK_URL, card)
     .then(() => console.log('Visitor follow-up sent to Teams OK'))
