@@ -84,7 +84,7 @@ class GoChatBot extends ActivityHandler {
       }
 
       // Extract message — remove session ID if present
-      const messageContent = text.replace(sessionId, '').trim();
+      const messageContent = text.replace(sessionId, '').replace(/^[\s.]+/, '').trim();
 
       if (!messageContent) {
         console.log('No message content found');
