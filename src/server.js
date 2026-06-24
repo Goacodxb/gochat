@@ -274,13 +274,13 @@ const bot = new GoChatBot();
 
 app.post('/api/messages', async (req, res) => {
   console.log('Received at /api/messages');
+  res.status(200).send('ok'); // Respond immediately
   try {
     await adapter.processActivity(req, res, async (context) => {
       await bot.run(context);
     });
   } catch (err) {
     console.error('Bot Framework error:', err.message);
-    res.status(200).send('ok');
   }
 });
 
