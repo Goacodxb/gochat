@@ -274,13 +274,13 @@ const bot = new GoChatBot();
 
 app.post('/api/messages', async (req, res) => {
   console.log('Received at /api/messages');
-  res.status(200).send('ok'); // Respond immediately
   try {
     await adapter.processActivity(req, res, async (context) => {
       await bot.run(context);
     });
   } catch (err) {
     console.error('Bot Framework error:', err.message);
+    res.status(200).send('ok');
   }
 });
 
@@ -321,6 +321,11 @@ async function replyToTeamsThread(session, message, senderName) {
     return;
   }
   console.log('Sending visitor follow-up to Teams:', message);
+
+  const replyInstruction = session.claimed_by
+    ? `@GoChat ${message}` // Agent can just type @GoChat + message
+    : `@GoChat ${session.id} <your reply>`; // First reply needs session ID
+
   const card = {
     type: 'message',
     attachments: [{
@@ -343,7 +348,7 @@ async function replyToTeamsThread(session, message, senderName) {
           },
           {
             type: 'TextBlock',
-            text: `To reply: @GoChat ${session.id} <your message>`,
+            text: session.claimed_by ? `Claimed by: ${session.claimed_by} | @GoChat <your reply>` : `To reply: @GoChat ${session.id} <your message>`,
             wrap: true,
             isSubtle: true,
             size: 'Small',
@@ -352,6 +357,7 @@ async function replyToTeamsThread(session, message, senderName) {
       },
     }],
   };
+
   await axios.post(process.env.TEAMS_WEBHOOK_URL, card)
     .then(() => console.log('Visitor follow-up sent to Teams OK'))
     .catch(err => console.error('Teams webhook error:', err.message));
