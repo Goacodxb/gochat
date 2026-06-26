@@ -172,6 +172,22 @@ app.post('/api/teams/claim', async (req, res) => {
   }
 });
 
+// ── POST /api/teams/thread — save Teams message ID for threading
+app.post('/api/teams/thread', async (req, res) => {
+  const { sessionId, messageId } = req.body;
+  if (!sessionId || !messageId) return res.status(400).json({ error: 'Missing data' });
+  try {
+    await pool.query(
+      'UPDATE sessions SET teams_thread_id = $1 WHERE id = $2',
+      [messageId, sessionId]
+    );
+    console.log('Saved Teams thread ID:', messageId, 'for session:', sessionId);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
 // ── ADMIN ROUTES
 function adminAuth(req, res, next) {
   const token = req.headers['x-admin-secret'] || req.query.secret;
@@ -274,20 +290,93 @@ const bot = new GoChatBot();
 
 app.post('/api/messages', async (req, res) => {
   console.log('Received at /api/messages');
+  res.status(200).send('ok');
   try {
     await adapter.processActivity(req, res, async (context) => {
       await bot.run(context);
     });
   } catch (err) {
     console.error('Bot Framework error:', err.message);
-    res.status(200).send('ok');
   }
 });
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
-// ── Teams Helpers
+// ── Graph API token
+async function getGraphToken() {
+  const response = await axios.post(
+    `https://login.microsoftonline.com/${process.env.APP_TENANT_ID}/oauth2/v2.0/token`,
+    new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: process.env.TEAMS_APP_ID,
+      client_secret: process.env.TEAMS_APP_PASSWORD,
+      scope: 'https://graph.microsoft.com/.default',
+    }),
+    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+  );
+  return response.data.access_token;
+}
+
+// ── Post to Teams (Graph API with webhook fallback)
 async function postToTeams(sessionId, name, email, message) {
+  const teamId = process.env.TEAMS_TEAM_ID;
+  const channelId = process.env.TEAMS_CHANNEL_ID;
+
+  // Try Graph API first
+  if (teamId && channelId) {
+    try {
+      const token = await getGraphToken();
+
+      const body = {
+        body: {
+          contentType: 'html',
+          content: `<attachment id="1"></attachment>`,
+        },
+        attachments: [{
+          id: '1',
+          contentType: 'application/vnd.microsoft.card.adaptive',
+          content: JSON.stringify({
+            $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+            type: 'AdaptiveCard',
+            version: '1.4',
+            body: [
+              { type: 'TextBlock', text: '💬 New chat from website visitor', weight: 'Bolder', size: 'Medium', color: 'Accent' },
+              { type: 'FactSet', facts: [
+                { title: 'Name', value: name },
+                { title: 'Email', value: email },
+                { title: 'Session ID', value: sessionId },
+              ]},
+              { type: 'TextBlock', text: `"${message}"`, wrap: true, isSubtle: true },
+              { type: 'TextBlock', text: `To reply: @GoChat ${sessionId} <your message>`, wrap: true, color: 'Accent', size: 'Small' },
+            ],
+          }),
+        }],
+      };
+
+      const response = await axios.post(
+        `https://graph.microsoft.com/v1.0/teams/${teamId}/channels/${channelId}/messages`,
+        body,
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+      );
+
+      const teamsMessageId = response.data.id;
+      if (teamsMessageId) {
+        await pool.query(
+          'UPDATE sessions SET teams_thread_id = $1 WHERE id = $2',
+          [teamsMessageId, sessionId]
+        );
+        console.log('Posted to Teams via Graph API ✅ messageId:', teamsMessageId);
+      }
+      return;
+
+    } catch (err) {
+      console.error('Graph API error:', JSON.stringify(err.response?.data) || err.message);
+      console.error('Graph API status:', err.response?.status);
+      console.log('Falling back to webhook...');
+    }
+  }
+
+  // Fallback to webhook
   if (!process.env.TEAMS_WEBHOOK_URL) return;
   const card = {
     type: 'message',
@@ -304,28 +393,68 @@ async function postToTeams(sessionId, name, email, message) {
             { title: 'Email', value: email },
             { title: 'Session ID', value: sessionId },
           ]},
-          { type: 'TextBlock', text: '"' + message + '"', wrap: true, isSubtle: true },
-          { type: 'TextBlock', text: 'To reply: @GoChat ' + sessionId + ' <your message>', wrap: true, color: 'Accent', size: 'Small' },
+          { type: 'TextBlock', text: `"${message}"`, wrap: true, isSubtle: true },
+          { type: 'TextBlock', text: `To reply: @GoChat ${sessionId} <your message>`, wrap: true, color: 'Accent', size: 'Small' },
         ],
       },
     }],
   };
   await axios.post(process.env.TEAMS_WEBHOOK_URL, card)
-    .then(() => console.log('Posted to Teams OK'))
-    .catch(err => console.error('Teams webhook error:', err.message));
+    .then(() => console.log('Posted to Teams via webhook ✅'))
+    .catch(err => console.error('Webhook error:', err.message));
 }
 
+// ── Reply to Teams thread (Graph API with webhook fallback)
 async function replyToTeamsThread(session, message, senderName) {
-  if (!process.env.TEAMS_WEBHOOK_URL) {
-    console.log('No webhook URL set');
-    return;
-  }
   console.log('Sending visitor follow-up to Teams:', message);
 
-  const replyInstruction = session.claimed_by
-    ? `@GoChat ${message}` // Agent can just type @GoChat + message
-    : `@GoChat ${session.id} <your reply>`; // First reply needs session ID
+  const teamId = process.env.TEAMS_TEAM_ID;
+  const channelId = process.env.TEAMS_CHANNEL_ID;
+  const threadId = session.teams_thread_id;
 
+  // Try Graph API reply to thread
+  if (teamId && channelId && threadId) {
+    try {
+      const token = await getGraphToken();
+
+      const body = {
+        body: {
+          contentType: 'html',
+          content: `<attachment id="1"></attachment>`,
+        },
+        attachments: [{
+          id: '1',
+          contentType: 'application/vnd.microsoft.card.adaptive',
+          content: JSON.stringify({
+            $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+            type: 'AdaptiveCard',
+            version: '1.4',
+            body: [
+              { type: 'TextBlock', text: `💬 ${senderName} (visitor)`, weight: 'Bolder', color: 'Accent' },
+              { type: 'TextBlock', text: message, wrap: true },
+              { type: 'TextBlock', text: session.claimed_by ? `Claimed by: ${session.claimed_by} | @GoChat <your reply>` : `To reply: @GoChat ${session.id} <your message>`, wrap: true, isSubtle: true, size: 'Small' },
+            ],
+          }),
+        }],
+      };
+
+      await axios.post(
+        `https://graph.microsoft.com/v1.0/teams/${teamId}/channels/${channelId}/messages/${threadId}/replies`,
+        body,
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+      );
+
+      console.log('Visitor follow-up posted as reply in thread ✅');
+      return;
+
+    } catch (err) {
+      console.error('Graph API reply error:', JSON.stringify(err.response?.data) || err.message);
+      console.log('Falling back to webhook...');
+    }
+  }
+
+  // Fallback to webhook
+  if (!process.env.TEAMS_WEBHOOK_URL) return;
   const card = {
     type: 'message',
     attachments: [{
@@ -335,32 +464,16 @@ async function replyToTeamsThread(session, message, senderName) {
         type: 'AdaptiveCard',
         version: '1.4',
         body: [
-          {
-            type: 'TextBlock',
-            text: `💬 ${senderName} (visitor)`,
-            weight: 'Bolder',
-            color: 'Accent',
-          },
-          {
-            type: 'TextBlock',
-            text: message,
-            wrap: true,
-          },
-          {
-            type: 'TextBlock',
-            text: session.claimed_by ? `Claimed by: ${session.claimed_by} | @GoChat <your reply>` : `To reply: @GoChat ${session.id} <your message>`,
-            wrap: true,
-            isSubtle: true,
-            size: 'Small',
-          },
+          { type: 'TextBlock', text: `💬 ${senderName} (visitor)`, weight: 'Bolder', color: 'Accent' },
+          { type: 'TextBlock', text: message, wrap: true },
+          { type: 'TextBlock', text: session.claimed_by ? `Claimed by: ${session.claimed_by} | @GoChat <your reply>` : `To reply: @GoChat ${session.id} <your message>`, wrap: true, isSubtle: true, size: 'Small' },
         ],
       },
     }],
   };
-
   await axios.post(process.env.TEAMS_WEBHOOK_URL, card)
-    .then(() => console.log('Visitor follow-up sent to Teams OK'))
-    .catch(err => console.error('Teams webhook error:', err.message));
+    .then(() => console.log('Visitor follow-up sent via webhook ✅'))
+    .catch(err => console.error('Webhook error:', err.message));
 }
 
 function extractSessionFromText(text) {
