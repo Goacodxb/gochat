@@ -1,4 +1,4 @@
-const { ActivityHandler } = require('botbuilder');
+const { ActivityHandler, TurnContext } = require('botbuilder');
 const { Pool } = require('pg');
 
 const pool = new Pool({
@@ -7,8 +7,9 @@ const pool = new Pool({
 });
 
 class GoChatBot extends ActivityHandler {
-  constructor() {
+  constructor(adapter) {
     super();
+    this.adapter = adapter;
 
     this.onMessage(async (context, next) => {
       // Ignore messages from the bot itself
@@ -29,12 +30,11 @@ class GoChatBot extends ActivityHandler {
 
       const from = context.activity.from?.name || 'Agent';
 
-      // Remove messageid suffix from conversation ID for consistent matching
+      // Remove messageid suffix from conversation ID
       const rawConversationId = context.activity.conversation?.id || '';
       const teamsConversationId = rawConversationId.split(';messageid=')[0];
 
       console.log('Bot received clean message:', text, 'from:', from);
-      console.log('Teams conversation ID:', teamsConversationId);
 
       // Handle commands
       if (text === '/goonline') {
@@ -85,7 +85,7 @@ class GoChatBot extends ActivityHandler {
         return;
       }
 
-      // Extract message — remove session ID if present
+      // Extract message
       const messageContent = text.replace(sessionId, '').replace(/^[\s.]+/, '').trim();
 
       if (!messageContent) {
@@ -103,8 +103,7 @@ class GoChatBot extends ActivityHandler {
           return;
         }
 
-        // ── CLAIM SYSTEM ──────────────────────────────
-        // If session is waiting — first agent to reply claims it
+        // Claim if waiting
         if (session.rows[0].status === 'waiting') {
           await pool.query(
             `UPDATE sessions SET status='active', claimed_by=$1, updated_at=NOW() WHERE id=$2`,
@@ -113,22 +112,23 @@ class GoChatBot extends ActivityHandler {
           broadcastToSession(sessionId, { type: 'agent_joined', agentName: from });
           console.log('Session claimed by:', from);
         }
-        // If session already claimed by another agent — ignore
-        else if (session.rows[0].status === 'active' && 
-                 session.rows[0].claimed_by && 
+        // If already claimed by another agent — ignore
+        else if (session.rows[0].status === 'active' &&
+                 session.rows[0].claimed_by &&
                  session.rows[0].claimed_by !== from) {
-          console.log('Session already claimed by:', session.rows[0].claimed_by, '— ignoring reply from:', from);
+          console.log('Session already claimed by:', session.rows[0].claimed_by, '— ignoring:', from);
           await next();
           return;
         }
 
-        // Save Teams conversation ID for future replies without session ID
-        if (teamsConversationId && !session.rows[0].teams_thread_id) {
+        // Save Teams conversation reference for proactive messaging
+        const conversationReference = JSON.stringify(TurnContext.getConversationReference(context.activity));
+        if (!session.rows[0].teams_conversation_ref) {
           await pool.query(
-            `UPDATE sessions SET teams_thread_id = $1 WHERE id = $2`,
-            [teamsConversationId, sessionId]
+            `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2 WHERE id = $3`,
+            [teamsConversationId, conversationReference, sessionId]
           );
-          console.log('Saved Teams conversation ID for session');
+          console.log('Saved Teams conversation reference for proactive messaging');
         }
 
         // Check for duplicate within 5 seconds
