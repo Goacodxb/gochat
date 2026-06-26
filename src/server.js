@@ -286,7 +286,8 @@ const adapter = new BotFrameworkAdapter({
 });
 
 global.sessionClients = sessionClients;
-const bot = new GoChatBot();
+global.botAdapter = adapter;
+const bot = new GoChatBot(adapter);
 
 app.post('/api/messages', async (req, res) => {
   console.log('Received at /api/messages');
@@ -404,51 +405,38 @@ async function postToTeams(sessionId, name, email, message) {
     .catch(err => console.error('Webhook error:', err.message));
 }
 
-// ── Reply to Teams thread (Graph API with webhook fallback)
+// ── Reply to Teams thread (Proactive messaging with webhook fallback)
 async function replyToTeamsThread(session, message, senderName) {
   console.log('Sending visitor follow-up to Teams:', message);
 
-  const teamId = process.env.TEAMS_TEAM_ID;
-  const channelId = process.env.TEAMS_CHANNEL_ID;
-  const threadId = session.teams_thread_id;
+  const adaptiveCard = {
+    $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+    type: 'AdaptiveCard',
+    version: '1.4',
+    body: [
+      { type: 'TextBlock', text: `💬 ${senderName} (visitor)`, weight: 'Bolder', color: 'Accent' },
+      { type: 'TextBlock', text: message, wrap: true },
+      { type: 'TextBlock', text: session.claimed_by ? `Claimed by: ${session.claimed_by} | @GoChat <your reply>` : `To reply: @GoChat ${session.id} <your message>`, wrap: true, isSubtle: true, size: 'Small' },
+    ],
+  };
 
-  // Try Graph API reply to thread
-  if (teamId && channelId && threadId) {
+  // Try proactive messaging using saved conversation reference
+  if (session.teams_conversation_ref && global.botAdapter) {
     try {
-      const token = await getGraphToken();
-
-      const body = {
-        body: {
-          contentType: 'html',
-          content: `<attachment id="1"></attachment>`,
-        },
-        attachments: [{
-          id: '1',
-          contentType: 'application/vnd.microsoft.card.adaptive',
-          content: JSON.stringify({
-            $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
-            type: 'AdaptiveCard',
-            version: '1.4',
-            body: [
-              { type: 'TextBlock', text: `💬 ${senderName} (visitor)`, weight: 'Bolder', color: 'Accent' },
-              { type: 'TextBlock', text: message, wrap: true },
-              { type: 'TextBlock', text: session.claimed_by ? `Claimed by: ${session.claimed_by} | @GoChat <your reply>` : `To reply: @GoChat ${session.id} <your message>`, wrap: true, isSubtle: true, size: 'Small' },
-            ],
-          }),
-        }],
-      };
-
-      await axios.post(
-        `https://graph.microsoft.com/v1.0/teams/${teamId}/channels/${channelId}/messages/${threadId}/replies`,
-        body,
-        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
-      );
-
-      console.log('Visitor follow-up posted as reply in thread ✅');
+      const conversationReference = JSON.parse(session.teams_conversation_ref);
+      await global.botAdapter.continueConversation(conversationReference, async (context) => {
+        await context.sendActivity({
+          type: 'message',
+          attachments: [{
+            contentType: 'application/vnd.microsoft.card.adaptive',
+            content: adaptiveCard,
+          }],
+        });
+      });
+      console.log('Visitor follow-up sent via proactive messaging ✅');
       return;
-
     } catch (err) {
-      console.error('Graph API reply error:', JSON.stringify(err.response?.data) || err.message);
+      console.error('Proactive messaging error:', err.message);
       console.log('Falling back to webhook...');
     }
   }
@@ -475,6 +463,7 @@ async function replyToTeamsThread(session, message, senderName) {
     .then(() => console.log('Visitor follow-up sent via webhook ✅'))
     .catch(err => console.error('Webhook error:', err.message));
 }
+
 
 function extractSessionFromText(text) {
   const match = text.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
