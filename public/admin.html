@@ -4,351 +4,1237 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GoChat Admin — Goidentity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f5f7; color: #172b4d; }
-  .header { background: #0f1d3a; color: white; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
-  .header h1 { font-size: 18px; font-weight: 600; }
-  .header span { opacity: 0.7; font-size: 14px; }
-  .login { max-width: 400px; margin: 80px auto; background: white; border-radius: 8px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-  .login h2 { margin-bottom: 20px; font-size: 20px; }
-  .login input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; margin-bottom: 12px; }
-  .login button { width: 100%; padding: 10px; background: #0f1d3a; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }
-  .login button:hover { background: #1a2f5a; }
-  .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
-  .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; }
-  .tab { padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; font-size: 14px; font-weight: 500; color: #6b778c; }
-  .tab.active { color: #0f1d3a; border-bottom-color: #0f1d3a; }
-  .card { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th { background: #f4f5f7; padding: 10px 16px; text-align: left; font-weight: 600; color: #6b778c; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-  td { padding: 12px 16px; border-top: 1px solid #f0f0f0; }
-  tr:hover td { background: #f8f9ff; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
-  .badge.waiting { background: #fffae6; color: #974f0c; }
-  .badge.active { background: #e3fcef; color: #006644; }
-  .badge.closed { background: #f4f5f7; color: #6b778c; }
-  .btn { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; }
-  .btn-primary { background: #0f1d3a; color: white; }
-  .btn-primary:hover { background: #1a2f5a; }
-  .btn-danger { background: #de350b; color: white; }
-  .btn-danger:hover { background: #bf2600; }
-  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
-  .modal.open { display: flex; }
-  .modal-box { background: white; border-radius: 8px; width: 640px; max-height: 85vh; overflow: hidden; display: flex; flex-direction: column; }
-  .modal-header { padding: 16px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-  .modal-header h3 { font-size: 16px; }
-  .modal-header-info { font-size: 12px; color: #6b778c; margin-top: 2px; }
-  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #6b778c; }
-  .modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
-  .message { margin-bottom: 12px; }
-  .message .meta { font-size: 11px; color: #6b778c; margin-bottom: 2px; }
-  .message .bubble { display: inline-block; padding: 8px 12px; border-radius: 8px; max-width: 80%; font-size: 14px; line-height: 1.4; }
-  .message.visitor .bubble { background: #f4f5f7; color: #172b4d; }
-  .message.agent .bubble { background: #0f1d3a; color: white; margin-left: auto; display: block; }
-  .message.agent { text-align: right; }
-  .modal-reply { padding: 12px 16px; border-top: 2px solid #f0f0f0; background: #fafbfc; }
-  .modal-reply-label { font-size: 11px; color: #6b778c; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; }
-  .modal-reply-box { display: flex; gap: 8px; align-items: flex-end; }
-  .modal-reply-box textarea { flex: 1; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-family: inherit; resize: none; min-height: 40px; max-height: 120px; }
-  .modal-reply-box textarea:focus { outline: none; border-color: #0f1d3a; }
-  .modal-reply-actions { display: flex; gap: 8px; align-items: center; }
-  .empty { padding: 40px; text-align: center; color: #6b778c; font-size: 14px; }
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-  .stat { background: white; border-radius: 8px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-  .stat .num { font-size: 28px; font-weight: 700; color: #0f1d3a; }
-  .stat .label { font-size: 12px; color: #6b778c; margin-top: 2px; }
-  .session-status-active { border-left: 3px solid #36b37e; }
-  .session-status-waiting { border-left: 3px solid #ffab00; }
-  #loginScreen { display: block; }
-  #appScreen { display: none; }
-  .reply-sent { color: #006644; font-size: 12px; display: none; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sidebar-w: 220px;
+  --brand: #111d43;
+  --brand-mid: #1a2d60;
+  --brand-light: #243580;
+  --accent: #4f6fff;
+  --accent-soft: #eef1ff;
+  --green: #12b76a;
+  --green-soft: #dcfce7;
+  --amber: #f59e0b;
+  --amber-soft: #fef3c7;
+  --red: #ef4444;
+  --red-soft: #fee2e2;
+  --purple: #8b5cf6;
+  --purple-soft: #ede9fe;
+  --surface: #f4f6fb;
+  --card: #ffffff;
+  --border: #e8eaf0;
+  --text-1: #0f172a;
+  --text-2: #475569;
+  --text-3: #94a3b8;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--surface);
+  color: var(--text-1);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* ═══ LOGIN ═══════════════════════════════════════════════ */
+#loginScreen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #0b1530 0%, #111d43 55%, #0f2060 100%);
+  position: relative;
+  overflow: hidden;
+}
+#loginScreen::before {
+  content: '';
+  position: absolute;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(79,111,255,0.12) 0%, transparent 70%);
+  top: -100px; right: -100px;
+}
+#loginScreen::after {
+  content: '';
+  position: absolute;
+  width: 400px; height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%);
+  bottom: -80px; left: -80px;
+}
+.login-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 40px 36px 36px;
+  width: 400px;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.28);
+}
+.login-brand {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 30px; padding-bottom: 24px;
+  border-bottom: 1.5px solid #f1f5f9;
+}
+.login-logo-box {
+  width: 44px; height: 44px; border-radius: 11px;
+  background: var(--brand);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; overflow: hidden;
+}
+.login-logo-box img { width: 100%; height: 100%; object-fit: contain; padding: 6px; filter: brightness(0) invert(1); }
+.login-logo-box .fallback { color: white; font-weight: 800; font-size: 15px; letter-spacing: -0.5px; }
+.login-brand-text { flex: 1; }
+.login-brand-name { font-size: 16px; font-weight: 700; color: var(--brand); letter-spacing: -0.3px; }
+.login-brand-sub { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+.live-pill {
+  display: flex; align-items: center; gap: 5px;
+  background: #f0fdf4; border: 1px solid #bbf7d0;
+  color: #15803d; padding: 3px 10px;
+  border-radius: 20px; font-size: 11px; font-weight: 600;
+}
+.live-dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; animation: pulse-dot 2s infinite; }
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.login-title { font-size: 22px; font-weight: 700; color: var(--text-1); letter-spacing: -0.5px; margin-bottom: 4px; }
+.login-sub { font-size: 13px; color: var(--text-2); margin-bottom: 26px; }
+.field-group { margin-bottom: 16px; }
+.field-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
+.field-input {
+  width: 100%; height: 44px;
+  padding: 0 14px 0 40px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px; font-family: inherit;
+  outline: none; transition: all 0.15s;
+  color: var(--text-1); background: #f8fafc;
+}
+.field-input:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px rgba(79,111,255,0.12); }
+.field-wrap { position: relative; }
+.field-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 16px; }
+.btn-signin {
+  width: 100%; height: 46px;
+  background: var(--brand);
+  color: white; border: none; border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.15s; margin-top: 22px;
+  letter-spacing: 0.1px;
+}
+.btn-signin:hover { background: var(--brand-mid); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(17,29,67,0.3); }
+.btn-signin:active { transform: translateY(0); }
+.security-row { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 16px; }
+.security-row span { font-size: 11px; color: var(--text-3); }
+.login-error { color: var(--red); font-size: 12px; margin-top: 10px; display: none; padding: 9px 12px; background: var(--red-soft); border-radius: var(--radius-sm); border-left: 3px solid var(--red); }
+
+/* ═══ APP LAYOUT ═══════════════════════════════════════════ */
+#appScreen { display: none; min-height: 100vh; }
+.app-layout { display: flex; min-height: 100vh; }
+
+/* ═══ SIDEBAR ═══════════════════════════════════════════════ */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--brand);
+  display: flex; flex-direction: column;
+  position: fixed; top: 0; left: 0; bottom: 0;
+  z-index: 100; overflow: hidden;
+}
+.sidebar-logo {
+  padding: 20px 18px 16px;
+  display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.sidebar-logo-box {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; overflow: hidden;
+}
+.sidebar-logo-box img { width: 100%; height: 100%; object-fit: contain; padding: 4px; filter: brightness(0) invert(1); }
+.sidebar-logo-box .fallback { color: white; font-weight: 800; font-size: 13px; }
+.sidebar-brand-name { font-size: 14px; font-weight: 700; color: #fff; letter-spacing: -0.2px; }
+.sidebar-brand-sub { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 1px; }
+
+.sidebar-section { padding: 16px 12px 8px; }
+.sidebar-section-label { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.8px; padding: 0 6px; margin-bottom: 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: 8px; cursor: pointer;
+  color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 500;
+  transition: all 0.15s; margin-bottom: 2px; text-decoration: none;
+  position: relative;
+}
+.nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.9); }
+.nav-item.active { background: rgba(255,255,255,0.12); color: #fff; }
+.nav-item.active::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px; background: #4f6fff; border-radius: 0 3px 3px 0; }
+.nav-icon { font-size: 16px; width: 18px; text-align: center; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto; background: var(--accent); color: white;
+  font-size: 10px; font-weight: 700; padding: 1px 6px;
+  border-radius: 10px; min-width: 18px; text-align: center;
+}
+.nav-badge.amber { background: var(--amber); }
+
+.sidebar-bottom {
+  margin-top: auto; padding: 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.agent-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 8px;
+  cursor: pointer; transition: background 0.15s;
+}
+.agent-row:hover { background: rgba(255,255,255,0.07); }
+.agent-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: white; flex-shrink: 0;
+}
+.agent-name { font-size: 12px; color: rgba(255,255,255,0.8); font-weight: 500; }
+.agent-role { font-size: 10px; color: rgba(255,255,255,0.4); }
+
+.avail-pill {
+  display: flex; align-items: center; gap: 5px;
+  margin: 0 12px 12px; padding: 7px 12px; border-radius: 8px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: all 0.15s; border: none; width: calc(100% - 24px);
+  font-family: inherit; justify-content: space-between;
+}
+.avail-pill.online { background: rgba(18,183,106,0.15); color: #6efbbb; border: 1px solid rgba(18,183,106,0.2); }
+.avail-pill.offline { background: rgba(239,68,56,0.12); color: #fca5a5; border: 1px solid rgba(239,68,56,0.18); }
+.avail-pill-left { display: flex; align-items: center; gap: 7px; }
+.avail-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.avail-pill.online .avail-dot { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.5); animation: pulse-dot 2s infinite; }
+.avail-pill.offline .avail-dot { background: #ef4444; }
+
+/* ═══ MAIN CONTENT ═══════════════════════════════════════════ */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1; display: flex; flex-direction: column; min-height: 100vh;
+}
+
+.topbar {
+  background: #fff; border-bottom: 1px solid var(--border);
+  padding: 0 28px; height: 60px;
+  display: flex; align-items: center; gap: 16px;
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar-title { font-size: 16px; font-weight: 700; color: var(--text-1); letter-spacing: -0.3px; }
+.topbar-sub { font-size: 12px; color: var(--text-3); margin-top: 1px; }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.topbar-icon-btn {
+  width: 36px; height: 36px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text-2); font-size: 16px;
+  transition: all 0.15s;
+}
+.topbar-icon-btn:hover { background: var(--surface); }
+.notif-wrap { position: relative; }
+.notif-dot {
+  position: absolute; top: 6px; right: 6px;
+  width: 7px; height: 7px; background: var(--red);
+  border-radius: 50%; border: 1.5px solid white;
+}
+.search-bar {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 0 12px;
+  height: 36px; width: 220px;
+}
+.search-bar input {
+  border: none; background: transparent; font-family: inherit;
+  font-size: 13px; color: var(--text-1); outline: none; flex: 1; width: 100%;
+}
+.search-bar input::placeholder { color: var(--text-3); }
+.search-bar svg { color: var(--text-3); flex-shrink: 0; }
+
+/* ═══ PAGE ═══════════════════════════════════════════════════ */
+.page { padding: 24px 28px; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+.page-heading { font-size: 20px; font-weight: 700; color: var(--text-1); letter-spacing: -0.4px; }
+.page-sub { font-size: 13px; color: var(--text-3); margin-top: 2px; }
+.btn-export {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 16px; background: var(--brand); color: white;
+  border: none; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+  transition: all 0.15s;
+}
+.btn-export:hover { background: var(--brand-mid); }
+
+/* ═══ STATS ═══════════════════════════════════════════════════ */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.stat-card {
+  background: var(--card); border-radius: var(--radius); padding: 20px;
+  border: 1px solid var(--border); position: relative; overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.stat-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); transform: translateY(-1px); }
+.stat-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+.stat-icon-wrap {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.stat-icon-wrap.blue { background: #eef1ff; }
+.stat-icon-wrap.green { background: var(--green-soft); }
+.stat-icon-wrap.amber { background: var(--amber-soft); }
+.stat-icon-wrap.purple { background: var(--purple-soft); }
+.stat-trend {
+  font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+  display: flex; align-items: center; gap: 3px;
+}
+.stat-trend.up { background: var(--green-soft); color: #166534; }
+.stat-trend.down { background: var(--red-soft); color: #991b1b; }
+.stat-num { font-size: 28px; font-weight: 700; color: var(--text-1); letter-spacing: -1px; line-height: 1; }
+.stat-label { font-size: 12px; color: var(--text-3); margin-top: 4px; font-weight: 500; }
+.stat-mini-chart { height: 36px; margin-top: 14px; display: flex; align-items: flex-end; gap: 3px; }
+.mini-bar {
+  flex: 1; border-radius: 3px 3px 0 0; min-width: 4px;
+  transition: opacity 0.2s;
+}
+.mini-bar.blue { background: #c7d2ff; }
+.mini-bar.green { background: #bbf7d0; }
+.mini-bar.amber { background: #fde68a; }
+.mini-bar.purple { background: #ddd6fe; }
+.stat-card:hover .mini-bar.blue { background: var(--accent); }
+.stat-card:hover .mini-bar.green { background: var(--green); }
+.stat-card:hover .mini-bar.amber { background: var(--amber); }
+.stat-card:hover .mini-bar.purple { background: var(--purple); }
+
+/* ═══ GRID ═══════════════════════════════════════════════════ */
+.content-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+
+/* ═══ MAIN TABLE CARD ═══════════════════════════════════════ */
+.card {
+  background: var(--card); border-radius: var(--radius);
+  border: 1px solid var(--border); overflow: hidden;
+}
+.card-header {
+  padding: 16px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.card-title { font-size: 14px; font-weight: 700; color: var(--text-1); }
+.card-sub { font-size: 12px; color: var(--text-3); margin-top: 1px; }
+.card-tabs { display: flex; gap: 4px; }
+.ctab {
+  padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
+  cursor: pointer; color: var(--text-2); transition: all 0.15s; border: none; background: none; font-family: inherit;
+}
+.ctab.active { background: var(--brand); color: white; }
+.ctab:hover:not(.active) { background: var(--surface); }
+.ctab-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface); color: var(--text-3);
+  font-size: 10px; font-weight: 700; padding: 1px 6px;
+  border-radius: 10px; margin-left: 5px;
+}
+.ctab.active .ctab-count { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.9); }
+
+.table-toolbar {
+  padding: 12px 20px; display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid #f1f5f9; background: #fdfdfe;
+  flex-wrap: wrap;
+}
+.tbl-search {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 0 12px; height: 34px;
+  flex: 1; min-width: 180px; max-width: 300px;
+}
+.tbl-search input {
+  border: none; background: transparent; font-family: inherit;
+  font-size: 12px; color: var(--text-1); outline: none; flex: 1;
+}
+.tbl-search input::placeholder { color: var(--text-3); }
+.tbl-filter {
+  height: 34px; padding: 0 10px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 12px; font-family: inherit;
+  color: var(--text-2); background: var(--card); cursor: pointer; outline: none;
+}
+.result-info { font-size: 11px; color: var(--text-3); margin-left: auto; }
+
+table { width: 100%; border-collapse: collapse; }
+th {
+  padding: 10px 16px; text-align: left;
+  font-size: 11px; font-weight: 600; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.6px;
+  background: #fafbfc; border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+td { padding: 12px 16px; border-bottom: 1px solid #f8f9fb; vertical-align: middle; }
+tbody tr { transition: background 0.1s; cursor: pointer; }
+tbody tr:hover td { background: #f8f9ff; }
+tbody tr:last-child td { border-bottom: none; }
+
+.visitor-cell { display: flex; align-items: center; gap: 10px; }
+.tbl-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; flex-shrink: 0; color: white;
+}
+.tbl-name { font-size: 13px; font-weight: 600; color: var(--text-1); }
+.tbl-email { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+.tbl-email-col { font-size: 12px; color: var(--text-2); }
+.tbl-agent { font-size: 12px; color: var(--text-2); }
+.tbl-date { font-size: 11px; color: var(--text-3); white-space: nowrap; }
+
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; white-space: nowrap;
+}
+.badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; }
+.badge.active { background: var(--green-soft); color: #15803d; }
+.badge.active::before { background: var(--green); }
+.badge.waiting { background: var(--amber-soft); color: #92400e; }
+.badge.waiting::before { background: var(--amber); }
+.badge.closed { background: #f1f5f9; color: #64748b; }
+.badge.closed::before { background: #94a3b8; }
+
+.btn-reply {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 12px; background: var(--brand); color: white;
+  border: none; border-radius: 6px; font-size: 11px; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: background 0.15s; white-space: nowrap;
+}
+.btn-reply:hover { background: var(--brand-mid); }
+.btn-view {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 12px; background: var(--surface); color: var(--text-2);
+  border: 1px solid var(--border); border-radius: 6px; font-size: 11px; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: background 0.15s; white-space: nowrap;
+}
+.btn-view:hover { background: #eef1ff; color: var(--accent); border-color: #c7d2ff; }
+
+/* ═══ PAGINATION ═══════════════════════════════════════════ */
+.pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px; border-top: 1px solid var(--border);
+  background: #fafbfc; flex-wrap: wrap; gap: 8px;
+}
+.page-left { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-3); }
+.page-left select {
+  padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px;
+  font-size: 12px; font-family: inherit; outline: none; color: var(--text-2);
+}
+.page-btns { display: flex; align-items: center; gap: 3px; }
+.pg-btn {
+  width: 30px; height: 30px; border-radius: 6px;
+  border: 1px solid var(--border); background: white;
+  font-size: 12px; font-weight: 500; color: var(--text-2);
+  cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.12s;
+}
+.pg-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.pg-btn.active { background: var(--brand); color: white; border-color: var(--brand); }
+.pg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ═══ RIGHT SIDEBAR PANELS ═══════════════════════════════════ */
+.right-col { display: flex; flex-direction: column; gap: 16px; }
+
+.panel { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+.panel-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.panel-title { font-size: 13px; font-weight: 700; color: var(--text-1); }
+.panel-link { font-size: 11px; color: var(--accent); font-weight: 600; cursor: pointer; }
+
+.activity-list { padding: 4px 0; }
+.activity-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 16px; border-bottom: 1px solid #f8f9fb;
+  transition: background 0.1s; cursor: pointer;
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-item:hover { background: #f8f9ff; }
+.act-dot-wrap { padding-top: 3px; }
+.act-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.act-dot.green { background: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
+.act-dot.amber { background: var(--amber); box-shadow: 0 0 0 3px var(--amber-soft); }
+.act-dot.blue { background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.act-dot.red { background: var(--red); box-shadow: 0 0 0 3px var(--red-soft); }
+.act-text { font-size: 12px; color: var(--text-2); line-height: 1.5; flex: 1; }
+.act-text strong { color: var(--text-1); font-weight: 600; }
+.act-time { font-size: 10px; color: var(--text-3); white-space: nowrap; margin-top: 2px; }
+
+.agents-list { padding: 4px 0; }
+.agent-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; border-bottom: 1px solid #f8f9fb; }
+.agent-item:last-child { border-bottom: none; }
+.agent-item-avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: white; flex-shrink: 0; }
+.agent-item-name { font-size: 12px; font-weight: 600; color: var(--text-1); }
+.agent-item-stat { font-size: 11px; color: var(--text-3); }
+.agent-chats { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--accent); background: var(--accent-soft); padding: 2px 8px; border-radius: 20px; }
+
+/* ═══ MODAL ═══════════════════════════════════════════════════ */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(15,23,42,0.55); backdrop-filter: blur(3px);
+  z-index: 300; align-items: center; justify-content: center; padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: white; border-radius: 16px;
+  width: 680px; max-width: 100%; max-height: 90vh;
+  overflow: hidden; display: flex; flex-direction: column;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.2);
+  animation: slideUp 0.22s ease;
+}
+@keyframes slideUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+.modal-head {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: #fafbfc;
+}
+.modal-visitor { display: flex; align-items: center; gap: 12px; }
+.modal-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: white; flex-shrink: 0; }
+.modal-vis-name { font-size: 15px; font-weight: 700; color: var(--text-1); }
+.modal-vis-meta { font-size: 12px; color: var(--text-3); margin-top: 1px; }
+.modal-actions { display: flex; align-items: center; gap: 8px; }
+.btn-end {
+  padding: 7px 14px; background: var(--red-soft); color: var(--red);
+  border: 1px solid #fecaca; border-radius: 6px;
+  font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+  transition: all 0.15s;
+}
+.btn-end:hover { background: var(--red); color: white; }
+.btn-close-m {
+  width: 32px; height: 32px; border-radius: 6px;
+  border: 1px solid var(--border); background: white; color: var(--text-2);
+  font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.btn-close-m:hover { background: var(--surface); }
+.modal-messages { flex: 1; overflow-y: auto; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px; }
+.msg-row { display: flex; flex-direction: column; }
+.msg-row.agent { align-items: flex-end; }
+.msg-meta { font-size: 11px; color: var(--text-3); margin-bottom: 4px; }
+.msg-bubble {
+  max-width: 70%; padding: 10px 14px; font-size: 13px; line-height: 1.55;
+  border-radius: 12px;
+}
+.msg-row.visitor .msg-bubble { background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 3px; }
+.msg-row.agent .msg-bubble { background: var(--brand); color: white; border-bottom-right-radius: 3px; }
+.modal-footer {
+  padding: 16px 22px; border-top: 1px solid var(--border);
+  background: #fafbfc;
+}
+.reply-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-3); margin-bottom: 8px; }
+.reply-row { display: flex; gap: 8px; align-items: flex-end; }
+.reply-ta {
+  flex: 1; padding: 10px 12px;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 13px; font-family: inherit; resize: none;
+  min-height: 40px; max-height: 120px; outline: none;
+  transition: border-color 0.15s;
+}
+.reply-ta:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,111,255,0.1); }
+.btn-send {
+  padding: 10px 18px; background: var(--brand); color: white;
+  border: none; border-radius: 8px; font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px;
+  transition: background 0.15s; white-space: nowrap;
+}
+.btn-send:hover { background: var(--brand-mid); }
+.btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ═══ TOAST ═══════════════════════════════════════════════════ */
+.toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 999;
+  background: var(--text-1); color: white;
+  padding: 12px 18px; border-radius: 8px;
+  font-size: 13px; font-weight: 500;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  transform: translateY(70px); opacity: 0;
+  transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* ═══ EMPTY ═══════════════════════════════════════════════════ */
+.empty-state { padding: 50px 20px; text-align: center; }
+.empty-icon { font-size: 32px; margin-bottom: 10px; }
+.empty-title { font-size: 14px; font-weight: 600; color: var(--text-2); margin-bottom: 4px; }
+.empty-sub { font-size: 12px; color: var(--text-3); }
+
+/* ═══ AVATAR COLORS ═══════════════════════════════════════════ */
+.av-0 { background: #4f6fff; }
+.av-1 { background: #8b5cf6; }
+.av-2 { background: #12b76a; }
+.av-3 { background: #f59e0b; }
+.av-4 { background: #ef4444; }
+.av-5 { background: #06b6d4; }
+.av-6 { background: #ec4899; }
+.av-7 { background: #10b981; }
 </style>
 </head>
 <body>
 
+<!-- ═══════════════════════════ LOGIN ═══════════════════════════ -->
 <div id="loginScreen">
-  <div class="login">
-    <h2>GoChat Admin</h2>
-    <p style="color:#6b778c;font-size:14px;margin-bottom:20px;">Enter your admin password to continue</p>
-    <input type="password" id="secretInput" placeholder="Admin password" onkeydown="if(event.key==='Enter')login()">
-    <button onclick="login()">Sign in</button>
-    <p id="loginError" style="color:red;font-size:13px;margin-top:10px;display:none">Incorrect password</p>
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-logo-box">
+        <img src="https://raw.githubusercontent.com/Goacodxb/gochat/main/public/img/goidentity.png"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <span class="fallback" style="display:none">GI</span>
+      </div>
+      <div class="login-brand-text">
+        <div class="login-brand-name">Goidentity</div>
+        <div class="login-brand-sub">Live chat admin</div>
+      </div>
+      <div class="live-pill"><div class="live-dot"></div>Live</div>
+    </div>
+    <div class="login-title">Welcome back</div>
+    <div class="login-sub">Sign in to your GoChat dashboard</div>
+    <div class="field-group">
+      <label class="field-label" for="secretInput">Admin password</label>
+      <div class="field-wrap">
+        <span class="field-icon">🔒</span>
+        <input class="field-input" type="password" id="secretInput" placeholder="Enter your password"
+          onkeydown="if(event.key==='Enter')login()">
+      </div>
+    </div>
+    <button class="btn-signin" onclick="login()">
+      <span id="signinText">Sign in to dashboard</span>
+      <span>→</span>
+    </button>
+    <div class="security-row">
+      <span>🛡️</span>
+      <span>Secured with admin authentication</span>
+    </div>
+    <div class="login-error" id="loginError">Incorrect password. Please try again.</div>
   </div>
 </div>
 
+<!-- ═══════════════════════════ APP ═══════════════════════════ -->
 <div id="appScreen">
-  <div class="header">
-    <h1>GoChat Admin</h1>
-    <span>Goidentity live chat dashboard</span>
-    <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
-      <span id="availBadge" style="font-size:13px;padding:4px 10px;border-radius:12px;"></span>
-      <button class="btn" style="background:white;color:#0f1d3a;" onclick="toggleAvailability()">Toggle availability</button>
-    </div>
-  </div>
+  <div class="app-layout">
 
-  <div class="container">
-    <div class="stats">
-      <div class="stat"><div class="num" id="statTotal">—</div><div class="label">Total chats</div></div>
-      <div class="stat"><div class="num" id="statActive">—</div><div class="label">Active now</div></div>
-      <div class="stat"><div class="num" id="statWaiting">—</div><div class="label">Waiting</div></div>
-      <div class="stat"><div class="num" id="statLeads">—</div><div class="label">Offline leads</div></div>
-    </div>
-
-    <div class="tabs">
-      <div class="tab active" onclick="showTab('sessions', this)">Chat history</div>
-      <div class="tab" onclick="showTab('leads', this)">Offline leads</div>
-    </div>
-
-    <div id="tabSessions" class="card">
-      <table>
-        <thead><tr><th>Visitor</th><th>Email</th><th>Status</th><th>Agent</th><th>Started</th><th></th></tr></thead>
-        <tbody id="sessionsBody"><tr><td colspan="6" class="empty">Loading...</td></tr></tbody>
-      </table>
-    </div>
-
-    <div id="tabLeads" class="card" style="display:none">
-      <table>
-        <thead><tr><th>Name</th><th>Email</th><th>Message</th><th>Received</th></tr></thead>
-        <tbody id="leadsBody"><tr><td colspan="4" class="empty">Loading...</td></tr></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- Chat modal with reply -->
-<div class="modal" id="chatModal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <div>
-        <h3 id="modalTitle">Chat history</h3>
-        <div class="modal-header-info" id="modalInfo"></div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <button class="btn btn-danger" id="closeSessionBtn" onclick="closeSession()" style="display:none">End chat</button>
-        <button class="modal-close" onclick="closeModal()">×</button>
-      </div>
-    </div>
-    <div class="modal-body" id="modalBody"></div>
-    <!-- Reply box — only shown for active/waiting sessions -->
-    <div class="modal-reply" id="modalReply" style="display:none">
-      <div class="modal-reply-label">Reply to visitor</div>
-      <div class="modal-reply-box">
-        <textarea id="replyInput" placeholder="Type your reply..." rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendReply()}"></textarea>
-        <div class="modal-reply-actions">
-          <button class="btn btn-primary" onclick="sendReply()">Send ➤</button>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-box">
+          <img src="https://raw.githubusercontent.com/Goacodxb/gochat/main/public/img/goidentity.png"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <span class="fallback" style="display:none">GI</span>
+        </div>
+        <div>
+          <div class="sidebar-brand-name">Goidentity</div>
+          <div class="sidebar-brand-sub">GoChat Admin</div>
         </div>
       </div>
-      <p class="reply-sent" id="replySent">✅ Reply sent!</p>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Main menu</div>
+        <div class="nav-item active" onclick="showPanel('chats',this)">
+          <span class="nav-icon">💬</span> Chat history
+          <span class="nav-badge" id="navBadgeChats">0</span>
+        </div>
+        <div class="nav-item" onclick="showPanel('leads',this)">
+          <span class="nav-icon">📥</span> Offline leads
+          <span class="nav-badge amber" id="navBadgeLeads">0</span>
+        </div>
+        <div class="nav-item" onclick="showPanel('activity',this)">
+          <span class="nav-icon">📊</span> Analytics
+        </div>
+        <div class="nav-item" onclick="showPanel('agents',this)">
+          <span class="nav-icon">👥</span> Agents
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Account</div>
+        <div class="nav-item">
+          <span class="nav-icon">⚙️</span> Settings
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">❓</span> Help center
+        </div>
+      </div>
+
+      <div style="margin-top:auto">
+        <button class="avail-pill" id="availPill" onclick="toggleAvailability()">
+          <div class="avail-pill-left">
+            <div class="avail-dot"></div>
+            <span id="availText">Offline</span>
+          </div>
+          <span style="font-size:10px;opacity:0.7">Toggle</span>
+        </button>
+        <div class="sidebar-bottom">
+          <div class="agent-row">
+            <div class="agent-avatar">PD</div>
+            <div>
+              <div class="agent-name">Praisy Daniel</div>
+              <div class="agent-role">Admin agent</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title" id="topbarTitle">Chat history</div>
+          <div class="topbar-sub" id="topbarSub">Goidentity live chat dashboard</div>
+        </div>
+        <div class="topbar-right">
+          <div class="search-bar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" placeholder="Search anything…" id="globalSearch" oninput="onGlobalSearch()">
+          </div>
+          <div class="notif-wrap">
+            <button class="topbar-icon-btn">🔔</button>
+            <div class="notif-dot" id="notifDot"></div>
+          </div>
+          <button class="topbar-icon-btn" onclick="loadAll()" title="Refresh">↻</button>
+        </div>
+      </div>
+
+      <div class="page">
+        <!-- PAGE HEADER -->
+        <div class="page-header">
+          <div>
+            <div class="page-heading" id="pageHeading">Chat history</div>
+            <div class="page-sub" id="pageSub">All visitor conversations</div>
+          </div>
+          <button class="btn-export" onclick="exportCSV()">
+            ↓ Export CSV
+          </button>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-top">
+              <div class="stat-icon-wrap blue">💬</div>
+              <span class="stat-trend up">↑ 12%</span>
+            </div>
+            <div class="stat-num" id="statTotal">—</div>
+            <div class="stat-label">Total chats</div>
+            <div class="stat-mini-chart" id="chartTotal"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-top">
+              <div class="stat-icon-wrap green">✅</div>
+              <span class="stat-trend up">↑ 8%</span>
+            </div>
+            <div class="stat-num" id="statActive">—</div>
+            <div class="stat-label">Active now</div>
+            <div class="stat-mini-chart" id="chartActive"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-top">
+              <div class="stat-icon-wrap amber">⏳</div>
+              <span class="stat-trend down">↓ 3%</span>
+            </div>
+            <div class="stat-num" id="statWaiting">—</div>
+            <div class="stat-label">Waiting</div>
+            <div class="stat-mini-chart" id="chartWaiting"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-top">
+              <div class="stat-icon-wrap purple">📥</div>
+              <span class="stat-trend up">↑ 2</span>
+            </div>
+            <div class="stat-num" id="statLeads">—</div>
+            <div class="stat-label">Offline leads</div>
+            <div class="stat-mini-chart" id="chartLeads"></div>
+          </div>
+        </div>
+
+        <!-- CONTENT GRID -->
+        <div class="content-grid">
+
+          <!-- MAIN TABLE CARD -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title" id="cardTitle">Conversations</div>
+                <div class="card-sub" id="cardSub">All incoming chat sessions</div>
+              </div>
+              <div class="card-tabs">
+                <button class="ctab active" onclick="switchTab('sessions',this)">
+                  Chats <span class="ctab-count" id="tcSessions">0</span>
+                </button>
+                <button class="ctab" onclick="switchTab('leads',this)">
+                  Leads <span class="ctab-count" id="tcLeads">0</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="table-toolbar">
+              <div class="tbl-search">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input type="text" placeholder="Search visitor or email…" id="tableSearch" oninput="onTableSearch()">
+              </div>
+              <select class="tbl-filter" id="statusFilter" onchange="onTableSearch()">
+                <option value="">All statuses</option>
+                <option value="active">Active</option>
+                <option value="waiting">Waiting</option>
+                <option value="closed">Closed</option>
+              </select>
+              <span class="result-info" id="resultInfo"></span>
+            </div>
+
+            <div id="tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Visitor</th>
+                    <th>Status</th>
+                    <th>Agent</th>
+                    <th>Started</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody">
+                  <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Loading…</div></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="pagination">
+              <div class="page-left">
+                Rows:
+                <select onchange="setPageSize(+this.value)" id="pageSizeEl">
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                </select>
+                <span id="pageRangeInfo" style="margin-left:4px"></span>
+              </div>
+              <div class="page-btns" id="pageBtns"></div>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN -->
+          <div class="right-col">
+
+            <!-- LIVE ACTIVITY -->
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Live activity</div>
+                <span class="panel-link" onclick="loadAll()">Refresh</span>
+              </div>
+              <div class="activity-list" id="activityList">
+                <div style="padding:20px;text-align:center;color:var(--text-3);font-size:12px">Loading…</div>
+              </div>
+            </div>
+
+            <!-- AGENTS -->
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Agents</div>
+              </div>
+              <div class="agents-list" id="agentsList">
+                <div class="agent-item">
+                  <div class="agent-item-avatar av-0">PD</div>
+                  <div>
+                    <div class="agent-item-name">Praisy Daniel</div>
+                    <div class="agent-item-stat">Lead agent</div>
+                  </div>
+                  <div class="agent-chats" id="pdChats">—</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<script>
-let adminSecret = '';
-let availability = false;
-let currentSessionId = null;
-let currentSessionStatus = null;
-let messageRefreshInterval = null;
+<!-- ═══════════════════════════ MODAL ═══════════════════════════ -->
+<div class="modal-overlay" id="chatModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-visitor">
+        <div class="modal-avatar av-0" id="modalAv">—</div>
+        <div>
+          <div class="modal-vis-name" id="modalName">—</div>
+          <div class="modal-vis-meta" id="modalMeta">—</div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-end" id="btnEnd" onclick="closeSession()" style="display:none">End chat</button>
+        <button class="btn-close-m" onclick="closeModal()">✕</button>
+      </div>
+    </div>
+    <div class="modal-messages" id="modalMsgs"></div>
+    <div class="modal-footer" id="modalFooter" style="display:none">
+      <div class="reply-label">Send a reply</div>
+      <div class="reply-row">
+        <textarea class="reply-ta" id="replyInput" placeholder="Type your message… (Enter to send)" rows="2"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendReply()}"></textarea>
+        <button class="btn-send" id="btnSend" onclick="sendReply()">Send →</button>
+      </div>
+    </div>
+  </div>
+</div>
 
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────
+let secret = '', availability = false;
+let allSessions = [], allLeads = [], filtered = [];
+let curTab = 'sessions';
+let page = 1, pageSize = 10;
+let curSessionId = null, msgTimer = null;
+
+// ─── MINI CHARTS ─────────────────────────────────────────────
+function renderMiniChart(id, color, vals) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const max = Math.max(...vals, 1);
+  el.innerHTML = vals.map(v => {
+    const h = Math.max(4, Math.round((v / max) * 32));
+    return `<div class="mini-bar ${color}" style="height:${h}px"></div>`;
+  }).join('');
+}
+function seedCharts(total, active, waiting, leads) {
+  const rnd = (base, n) => Array.from({length:n}, (_,i) => Math.max(0, Math.round(base * (0.5 + Math.random() * 0.7) * (i/n))));
+  renderMiniChart('chartTotal',   'blue',   [...rnd(total,6),   total]);
+  renderMiniChart('chartActive',  'green',  [...rnd(active,6),  active]);
+  renderMiniChart('chartWaiting', 'amber',  [...rnd(waiting,6), waiting]);
+  renderMiniChart('chartLeads',   'purple', [...rnd(leads,6),   leads]);
+}
+
+// ─── LOGIN ────────────────────────────────────────────────────
 function login() {
-  adminSecret = document.getElementById('secretInput').value;
-  fetch('/api/admin/sessions', { headers: { 'x-admin-secret': adminSecret } })
+  secret = document.getElementById('secretInput').value;
+  const btn = document.querySelector('.btn-signin');
+  const txt = document.getElementById('signinText');
+  btn.disabled = true; txt.textContent = 'Signing in…';
+  fetch('/api/admin/sessions', { headers: {'x-admin-secret': secret} })
     .then(r => {
+      btn.disabled = false; txt.textContent = 'Sign in to dashboard';
       if (r.status === 401) { document.getElementById('loginError').style.display = 'block'; return; }
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('appScreen').style.display = 'block';
       loadAll();
       setInterval(loadAll, 10000);
-    });
+    }).catch(() => { btn.disabled = false; txt.textContent = 'Sign in to dashboard'; });
 }
 
-function loadAll() {
-  loadSessions();
-  loadLeads();
-  loadAvailability();
-}
+// ─── LOAD ALL ─────────────────────────────────────────────────
+function loadAll() { loadSessions(); loadLeads(); loadAvailability(); }
 
 function loadAvailability() {
-  fetch('/api/availability')
-    .then(r => r.json())
-    .then(d => {
-      availability = d.online;
-      const badge = document.getElementById('availBadge');
-      badge.textContent = d.online ? '🟢 Online' : '🔴 Offline';
-      badge.style.background = d.online ? '#e3fcef' : '#ffebe6';
-      badge.style.color = d.online ? '#006644' : '#bf2600';
-    });
+  fetch('/api/availability').then(r => r.json()).then(d => {
+    availability = d.online;
+    const pill = document.getElementById('availPill');
+    const txt = document.getElementById('availText');
+    pill.className = 'avail-pill ' + (d.online ? 'online' : 'offline');
+    txt.textContent = d.online ? 'Online' : 'Offline';
+  }).catch(()=>{});
 }
 
 function toggleAvailability() {
-  const newState = !availability;
   fetch('/api/admin/availability', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
-    body: JSON.stringify({ online: newState })
-  }).then(() => loadAvailability());
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-admin-secret':secret},
+    body: JSON.stringify({online: !availability})
+  }).then(()=> loadAvailability());
 }
 
 function loadSessions() {
-  fetch('/api/admin/sessions', { headers: { 'x-admin-secret': adminSecret } })
-    .then(r => r.json())
-    .then(d => {
-      const body = document.getElementById('sessionsBody');
-      const sessions = d.sessions || [];
-      document.getElementById('statTotal').textContent = sessions.length;
-      document.getElementById('statActive').textContent = sessions.filter(s => s.status === 'active').length;
-      document.getElementById('statWaiting').textContent = sessions.filter(s => s.status === 'waiting').length;
-      if (!sessions.length) { body.innerHTML = '<tr><td colspan="6" class="empty">No chats yet</td></tr>'; return; }
-      body.innerHTML = sessions.map(s => `
-        <tr class="${s.status === 'active' ? 'session-status-active' : s.status === 'waiting' ? 'session-status-waiting' : ''}">
-          <td><strong>${esc(s.visitor_name)}</strong></td>
-          <td>${esc(s.visitor_email)}</td>
-          <td><span class="badge ${s.status}">${s.status}</span></td>
-          <td>${s.claimed_by ? esc(s.claimed_by) : '<span style="color:#6b778c">Unclaimed</span>'}</td>
-          <td>${formatDate(s.created_at)}</td>
-          <td>
-            <button class="btn btn-primary" onclick="viewChat('${s.id}','${esc(s.visitor_name)}','${esc(s.visitor_email)}','${s.status}')">
-              ${s.status === 'active' || s.status === 'waiting' ? '💬 Reply' : '👁 View'}
-            </button>
-          </td>
-        </tr>`).join('');
-    });
+  fetch('/api/admin/sessions', { headers:{'x-admin-secret':secret} })
+    .then(r=>r.json()).then(d => {
+      allSessions = d.sessions || [];
+      const act = allSessions.filter(s=>s.status==='active').length;
+      const wait = allSessions.filter(s=>s.status==='waiting').length;
+      document.getElementById('statTotal').textContent = allSessions.length;
+      document.getElementById('statActive').textContent = act;
+      document.getElementById('statWaiting').textContent = wait;
+      document.getElementById('tcSessions').textContent = allSessions.length;
+      document.getElementById('navBadgeChats').textContent = allSessions.length;
+      document.getElementById('pdChats').textContent = allSessions.filter(s=>s.claimed_by).length;
+      document.getElementById('notifDot').style.display = wait > 0 ? '' : 'none';
+      seedCharts(allSessions.length, act, wait, +document.getElementById('statLeads').textContent||0);
+      renderActivity();
+      if (curTab === 'sessions') applyFilter();
+    }).catch(()=>{});
 }
 
 function loadLeads() {
-  fetch('/api/admin/leads', { headers: { 'x-admin-secret': adminSecret } })
-    .then(r => r.json())
-    .then(d => {
-      const body = document.getElementById('leadsBody');
-      const leads = d.leads || [];
-      document.getElementById('statLeads').textContent = leads.length;
-      if (!leads.length) { body.innerHTML = '<tr><td colspan="4" class="empty">No offline leads yet</td></tr>'; return; }
-      body.innerHTML = leads.map(l => `
-        <tr>
-          <td>${esc(l.name)}</td>
-          <td>${esc(l.email)}</td>
-          <td style="max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l.message)}</td>
-          <td>${formatDate(l.created_at)}</td>
-        </tr>`).join('');
-    });
+  fetch('/api/admin/leads', { headers:{'x-admin-secret':secret} })
+    .then(r=>r.json()).then(d => {
+      allLeads = d.leads || [];
+      document.getElementById('statLeads').textContent = allLeads.length;
+      document.getElementById('tcLeads').textContent = allLeads.length;
+      document.getElementById('navBadgeLeads').textContent = allLeads.length;
+      if (curTab === 'leads') applyFilter();
+    }).catch(()=>{});
 }
 
-function viewChat(sessionId, name, email, status) {
-  currentSessionId = sessionId;
-  currentSessionStatus = status;
+// ─── FILTER / SEARCH ──────────────────────────────────────────
+function onGlobalSearch() {
+  document.getElementById('tableSearch').value = document.getElementById('globalSearch').value;
+  onTableSearch();
+}
+function onTableSearch() { page = 1; applyFilter(); }
 
-  document.getElementById('modalTitle').textContent = `Chat with ${name}`;
-  document.getElementById('modalInfo').textContent = email;
-  document.getElementById('modalBody').innerHTML = '<p style="color:#6b778c;font-size:14px;padding:8px 0">Loading...</p>';
-  document.getElementById('chatModal').classList.add('open');
+function applyFilter() {
+  const q = (document.getElementById('tableSearch').value || '').toLowerCase();
+  const st = document.getElementById('statusFilter').value;
+  const src = curTab === 'sessions' ? allSessions : allLeads;
 
-  // Show reply box only for active or waiting sessions
-  const isLive = status === 'active' || status === 'waiting';
-  document.getElementById('modalReply').style.display = isLive ? '' : 'none';
-  document.getElementById('closeSessionBtn').style.display = isLive ? '' : 'none';
-  document.getElementById('replySent').style.display = 'none';
+  filtered = src.filter(r => {
+    const name = (r.visitor_name || r.name || '').toLowerCase();
+    const email = (r.visitor_email || r.email || '').toLowerCase();
+    const matchQ = !q || name.includes(q) || email.includes(q);
+    const matchSt = !st || r.status === st;
+    return matchQ && matchSt;
+  });
 
-  loadMessages(sessionId);
+  document.getElementById('resultInfo').textContent = filtered.length + ' result' + (filtered.length!==1?'s':'');
+  renderTable();
+}
 
-  // Auto refresh messages every 3 seconds if chat is live
-  if (messageRefreshInterval) clearInterval(messageRefreshInterval);
-  if (isLive) {
-    messageRefreshInterval = setInterval(() => loadMessages(sessionId), 3000);
+// ─── RENDER TABLE ─────────────────────────────────────────────
+function renderTable() {
+  const start = (page-1)*pageSize;
+  const slice = filtered.slice(start, start+pageSize);
+  const body = document.getElementById('tableBody');
+
+  if (!slice.length) {
+    body.innerHTML = `<tr><td colspan="5"><div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-title">No results found</div>
+      <div class="empty-sub">Try adjusting your search or filter</div>
+    </div></td></tr>`;
+    document.getElementById('pageBtns').innerHTML = '';
+    document.getElementById('pageRangeInfo').textContent = '';
+    return;
   }
+
+  if (curTab === 'sessions') {
+    body.innerHTML = slice.map(s => {
+      const init = initials(s.visitor_name);
+      const avCls = 'av-' + (hashStr(s.visitor_name) % 8);
+      const isLive = s.status==='active' || s.status==='waiting';
+      return `<tr onclick="viewChat('${s.id}','${esc(s.visitor_name)}','${esc(s.visitor_email||'')}','${s.status}')">
+        <td>
+          <div class="visitor-cell">
+            <div class="tbl-avatar ${avCls}">${esc(init)}</div>
+            <div>
+              <div class="tbl-name">${esc(s.visitor_name)}</div>
+              <div class="tbl-email">${esc(s.visitor_email||'—')}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="badge ${s.status}">${s.status}</span></td>
+        <td class="tbl-agent">${s.claimed_by ? esc(s.claimed_by) : '<span style="color:var(--text-3)">Unclaimed</span>'}</td>
+        <td class="tbl-date">${formatDate(s.created_at)}</td>
+        <td>
+          <button class="${isLive?'btn-reply':'btn-view'}"
+            onclick="event.stopPropagation();viewChat('${s.id}','${esc(s.visitor_name)}','${esc(s.visitor_email||'')}','${s.status}')">
+            ${isLive ? '💬 Reply' : '👁 View'}
+          </button>
+        </td>
+      </tr>`;
+    }).join('');
+  } else {
+    body.innerHTML = slice.map(l => `<tr>
+      <td>
+        <div class="visitor-cell">
+          <div class="tbl-avatar av-${hashStr(l.name)%8}">${esc(initials(l.name))}</div>
+          <div>
+            <div class="tbl-name">${esc(l.name)}</div>
+            <div class="tbl-email">${esc(l.email)}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="badge closed">offline lead</span></td>
+      <td colspan="2" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2);font-size:12px">${esc(l.message)}</td>
+      <td class="tbl-date">${formatDate(l.created_at)}</td>
+    </tr>`).join('');
+  }
+
+  renderPagination();
 }
 
-function loadMessages(sessionId) {
-  fetch(`/api/admin/sessions/${sessionId}`, { headers: { 'x-admin-secret': adminSecret } })
-    .then(r => r.json())
-    .then(d => {
+function renderPagination() {
+  const total = filtered.length;
+  const totalPages = Math.ceil(total / pageSize);
+  const start = (page-1)*pageSize + 1;
+  const end = Math.min(page*pageSize, total);
+  document.getElementById('pageRangeInfo').textContent = `${start}–${end} of ${total}`;
+
+  const btns = document.getElementById('pageBtns');
+  if (totalPages <= 1) { btns.innerHTML = ''; return; }
+
+  let html = `<button class="pg-btn" onclick="goPage(${page-1})" ${page===1?'disabled':''}>‹</button>`;
+  const range = buildRange(page, totalPages);
+  range.forEach(p => {
+    if (p==='…') html += `<button class="pg-btn" disabled>…</button>`;
+    else html += `<button class="pg-btn${p===page?' active':''}" onclick="goPage(${p})">${p}</button>`;
+  });
+  html += `<button class="pg-btn" onclick="goPage(${page+1})" ${page===totalPages?'disabled':''}>›</button>`;
+  btns.innerHTML = html;
+}
+
+function buildRange(cur, total) {
+  const r = []; let last = 0;
+  for (let i=1; i<=total; i++) {
+    if (i===1||i===total||Math.abs(i-cur)<=1) {
+      if (last && i-last>1) r.push('…');
+      r.push(i); last=i;
+    }
+  }
+  return r;
+}
+
+function goPage(p) {
+  const total = Math.ceil(filtered.length/pageSize);
+  if (p<1||p>total) return;
+  page = p; renderTable();
+}
+function setPageSize(v) { pageSize=v; page=1; renderTable(); }
+
+// ─── TABS ─────────────────────────────────────────────────────
+function switchTab(tab, el) {
+  curTab = tab; page = 1;
+  document.querySelectorAll('.ctab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('statusFilter').style.display = tab==='sessions' ? '' : 'none';
+  applyFilter();
+}
+
+function showPanel(panel, el) {
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  if (panel==='chats') { document.getElementById('topbarTitle').textContent='Chat history'; document.getElementById('pageHeading').textContent='Chat history'; switchTab('sessions', document.querySelectorAll('.ctab')[0]); }
+  if (panel==='leads') { document.getElementById('topbarTitle').textContent='Offline leads'; document.getElementById('pageHeading').textContent='Offline leads'; switchTab('leads', document.querySelectorAll('.ctab')[1]); }
+}
+
+// ─── ACTIVITY FEED ────────────────────────────────────────────
+function renderActivity() {
+  const recent = [...allSessions].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,5);
+  const colors = {active:'green', waiting:'amber', closed:'blue'};
+  const el = document.getElementById('activityList');
+  if (!recent.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-3);font-size:12px">No activity yet</div>'; return; }
+  el.innerHTML = recent.map(s => `
+    <div class="activity-item" onclick="viewChat('${s.id}','${esc(s.visitor_name)}','${esc(s.visitor_email||'')}','${s.status}')">
+      <div class="act-dot-wrap"><div class="act-dot ${colors[s.status]||'blue'}"></div></div>
+      <div class="act-text"><strong>${esc(s.visitor_name)}</strong> started a chat</div>
+      <div class="act-time">${formatDate(s.created_at)}</div>
+    </div>`).join('');
+}
+
+// ─── MODAL ────────────────────────────────────────────────────
+function viewChat(id, name, email, status) {
+  curSessionId = id;
+  const init = initials(name);
+  const avCls = 'av-' + (hashStr(name) % 8);
+  document.getElementById('modalAv').textContent = init;
+  document.getElementById('modalAv').className = 'modal-avatar ' + avCls;
+  document.getElementById('modalName').textContent = name;
+  document.getElementById('modalMeta').textContent = email || 'No email';
+  const isLive = status==='active'||status==='waiting';
+  document.getElementById('btnEnd').style.display = isLive ? '' : 'none';
+  document.getElementById('modalFooter').style.display = isLive ? '' : 'none';
+  document.getElementById('chatModal').classList.add('open');
+  loadMsgs();
+  if (msgTimer) clearInterval(msgTimer);
+  if (isLive) msgTimer = setInterval(loadMsgs, 3000);
+}
+
+function loadMsgs() {
+  if (!curSessionId) return;
+  fetch(`/api/admin/sessions/${curSessionId}`, {headers:{'x-admin-secret':secret}})
+    .then(r=>r.json()).then(d => {
       const msgs = d.messages || [];
-      const body = document.getElementById('modalBody');
-      if (!msgs.length) {
-        body.innerHTML = '<p class="empty">No messages yet</p>';
-        return;
-      }
-      const scrolledToBottom = body.scrollHeight - body.scrollTop === body.clientHeight;
-      body.innerHTML = msgs.map(m => `
-        <div class="message ${m.sender_type}">
-          <div class="meta">${esc(m.sender_name)} · ${formatDate(m.created_at)}</div>
-          <div class="bubble">${esc(m.content)}</div>
+      const el = document.getElementById('modalMsgs');
+      if (!msgs.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-sub">No messages yet</div></div>'; return; }
+      el.innerHTML = msgs.map(m => `
+        <div class="msg-row ${m.sender_type}">
+          <div class="msg-meta">${esc(m.sender_name)} · ${formatDate(m.created_at)}</div>
+          <div class="msg-bubble">${esc(m.content)}</div>
         </div>`).join('');
-      // Auto scroll to bottom
-      body.scrollTop = body.scrollHeight;
-    });
+      el.scrollTop = el.scrollHeight;
+    }).catch(()=>{});
 }
 
 function sendReply() {
-  const input = document.getElementById('replyInput');
-  const content = input.value.trim();
-  if (!content || !currentSessionId) return;
-
-  const btn = document.querySelector('#modalReply .btn-primary');
-  btn.disabled = true;
-  btn.textContent = 'Sending...';
-
-  fetch(`/api/admin/reply`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
-    body: JSON.stringify({ sessionId: currentSessionId, content: content, agentName: 'Agent' })
-  })
-  .then(r => r.json())
-  .then(d => {
-    input.value = '';
-    btn.disabled = false;
-    btn.textContent = 'Send ➤';
-    document.getElementById('replySent').style.display = 'block';
-    setTimeout(() => document.getElementById('replySent').style.display = 'none', 2000);
-    loadMessages(currentSessionId);
-  })
-  .catch(() => {
-    btn.disabled = false;
-    btn.textContent = 'Send ➤';
-  });
+  const inp = document.getElementById('replyInput');
+  const content = inp.value.trim();
+  if (!content||!curSessionId) return;
+  const btn = document.getElementById('btnSend');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  fetch('/api/admin/reply', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-admin-secret':secret},
+    body: JSON.stringify({sessionId:curSessionId, content, agentName:'Agent'})
+  }).then(()=>{
+    inp.value = ''; btn.disabled=false; btn.textContent='Send →';
+    loadMsgs(); showToast('✅ Reply sent');
+  }).catch(()=>{ btn.disabled=false; btn.textContent='Send →'; });
 }
 
 function closeSession() {
-  if (!currentSessionId) return;
-  if (!confirm('Are you sure you want to end this chat?')) return;
-
-  fetch(`/api/admin/close`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
-    body: JSON.stringify({ sessionId: currentSessionId })
-  })
-  .then(() => {
-    closeModal();
-    loadAll();
-  });
+  if (!curSessionId||!confirm('End this chat?')) return;
+  fetch('/api/admin/close',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-admin-secret':secret},
+    body: JSON.stringify({sessionId:curSessionId})
+  }).then(()=>{ closeModal(); loadAll(); showToast('Chat ended'); });
 }
 
 function closeModal() {
   document.getElementById('chatModal').classList.remove('open');
-  if (messageRefreshInterval) {
-    clearInterval(messageRefreshInterval);
-    messageRefreshInterval = null;
-  }
-  currentSessionId = null;
+  if (msgTimer) { clearInterval(msgTimer); msgTimer=null; }
+  curSessionId = null;
 }
 
-function showTab(tab, el) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('tabSessions').style.display = tab === 'sessions' ? '' : 'none';
-  document.getElementById('tabLeads').style.display = tab === 'leads' ? '' : 'none';
+window.addEventListener('click', e => {
+  if (e.target===document.getElementById('chatModal')) closeModal();
+});
+
+// ─── EXPORT ───────────────────────────────────────────────────
+function exportCSV() {
+  const data = curTab==='sessions' ? allSessions : allLeads;
+  if (!data.length) { showToast('Nothing to export'); return; }
+  const header = curTab==='sessions'
+    ? ['Name','Email','Status','Agent','Started']
+    : ['Name','Email','Message','Received'];
+  const rows = data.map(r => curTab==='sessions'
+    ? [r.visitor_name,r.visitor_email,r.status,r.claimed_by||'',r.created_at]
+    : [r.name,r.email,r.message,r.created_at]);
+  const csv = [header,...rows].map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = `gochat-export-${Date.now()}.csv`;
+  a.click();
+  showToast('📥 Export downloaded');
 }
 
-function esc(str) {
-  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+// ─── UTILS ────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2600);
 }
-
-function formatDate(iso) {
-  return new Date(iso).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-}
-
-window.onclick = e => { if (e.target === document.getElementById('chatModal')) closeModal(); };
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function formatDate(iso) { return new Date(iso).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
+function initials(name) { return (name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+function hashStr(s) { let h=0; for(let c of String(s||'')) h=(h*31+c.charCodeAt(0))&0xffff; return h; }
 </script>
 </body>
 </html>
-
