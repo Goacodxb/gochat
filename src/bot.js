@@ -30,16 +30,17 @@ class GoChatBot extends ActivityHandler {
 
       const from = context.activity.from?.name || 'Agent';
 
-      // Remove messageid suffix from conversation ID
+      // Remove messageid suffix from conversation ID for lookup
       const rawConversationId = context.activity.conversation?.id || '';
       const teamsConversationId = rawConversationId.split(';messageid=')[0];
 
+      // Extract messageId for thread replies
+      const messageId = rawConversationId.includes(';messageid=')
+        ? rawConversationId.split(';messageid=')[1]
+        : null;
+
       console.log('Bot received clean message:', text, 'from:', from);
-      console.log('Full activity:', JSON.stringify({
-  replyToId: context.activity.replyToId,
-  conversationId: context.activity.conversation?.id,
-  channelData: context.activity.channelData,
-}))
+      console.log('teamsConversationId:', teamsConversationId, 'messageId:', messageId);
 
       // Handle commands
       if (text === '/goonline') {
@@ -59,7 +60,7 @@ class GoChatBot extends ActivityHandler {
       // Try to find session ID from message first
       let sessionId = extractSessionId(text);
 
-      // If no session ID in message, look up by Teams conversation ID
+      // If no session ID in message, look up by base Teams conversation ID
       if (!sessionId && teamsConversationId) {
         const sessionByThread = await pool.query(
           `SELECT id, claimed_by FROM sessions WHERE teams_thread_id = $1 AND status != 'closed' ORDER BY created_at DESC LIMIT 1`,
@@ -90,7 +91,7 @@ class GoChatBot extends ActivityHandler {
         return;
       }
 
-      // Extract message
+      // Extract message — remove session ID if present
       const messageContent = text.replace(sessionId, '').replace(/^[\s.]+/, '').trim();
 
       if (!messageContent) {
@@ -126,19 +127,16 @@ class GoChatBot extends ActivityHandler {
           return;
         }
 
-        // Save Teams conversation reference for proactive messaging
-   // Save Teams conversation reference and replyToId for threading
+        // Save conversation reference for proactive messaging
         const conversationReference = JSON.stringify(TurnContext.getConversationReference(context.activity));
-        const replyToId = context.activity.replyToId || null;
-        console.log('replyToId:', replyToId);
 
-      if (!session.rows[0].teams_conversation_ref) {
-  await pool.query(
-    `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2 WHERE id = $3`,
-    [replyToId || teamsConversationId, conversationReference, sessionId]
-  );
-  console.log('Saved Teams thread ID:', replyToId || teamsConversationId);
-}
+        // Save base conversationId for lookup + messageId for thread replies
+        await pool.query(
+          `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2, teams_activity_id = $3 WHERE id = $4`,
+          [teamsConversationId, conversationReference, messageId, sessionId]
+        );
+        console.log('Saved conversation ID:', teamsConversationId, 'messageId:', messageId);
+
         // Check for duplicate within 5 seconds
         const existing = await pool.query(
           `SELECT id FROM messages WHERE session_id=$1 AND sender_name=$2 AND content=$3 AND created_at > NOW() - INTERVAL '5 seconds'`,
