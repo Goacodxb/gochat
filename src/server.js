@@ -381,7 +381,7 @@ async function postToTeams(sessionId, name, email, message) {
   if (!process.env.TEAMS_WEBHOOK_URL) return;
   const card = {
     type: 'message',
-    replyToId: session.teams_thread_id,
+  
     attachments: [{
       contentType: 'application/vnd.microsoft.card.adaptive',
       content: {
