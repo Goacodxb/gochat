@@ -33,11 +33,6 @@ class GoChatBot extends ActivityHandler {
       // Remove messageid suffix from conversation ID
       const rawConversationId = context.activity.conversation?.id || '';
       const teamsConversationId = rawConversationId.split(';messageid=')[0];
-      // Extract messageid from conversationId for thread replies
-      const messageId = rawConversationId.includes(';messageid=') 
-      ? rawConversationId.split(';messageid=')[1] 
-        : null;
-      console.log('messageId from conversationId:', messageId);
 
       console.log('Bot received clean message:', text, 'from:', from);
       console.log('Full activity:', JSON.stringify({
@@ -137,18 +132,13 @@ class GoChatBot extends ActivityHandler {
         const replyToId = context.activity.replyToId || null;
         console.log('replyToId:', replyToId);
 
-  if (!session.rows[0].teams_conversation_ref) {
-  const messageId = rawConversationId.includes(';messageid=')
-    ? rawConversationId.split(';messageid=')[1]
-    : null;
-  console.log('messageId from conversationId:', messageId);
-  
-  await pool.query(
-    `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2 WHERE id = $3`,
-    [messageId || replyToId || teamsConversationId, conversationReference, sessionId]
-  );
-  console.log('Saved Teams thread ID:', messageId || replyToId || teamsConversationId);
-}
+        if (!session.rows[0].teams_conversation_ref) {
+          await pool.query(
+            `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2 WHERE id = $3`,
+            [replyToId || teamsConversationId, conversationReference, sessionId]
+          );
+          console.log('Saved Teams thread ID:', replyToId || teamsConversationId);
+        }
 
         // Check for duplicate within 5 seconds
         const existing = await pool.query(
