@@ -35,6 +35,11 @@ class GoChatBot extends ActivityHandler {
       const teamsConversationId = rawConversationId.split(';messageid=')[0];
 
       console.log('Bot received clean message:', text, 'from:', from);
+      console.log('Full activity:', JSON.stringify({
+  replyToId: context.activity.replyToId,
+  conversationId: context.activity.conversation?.id,
+  channelData: context.activity.channelData,
+}))
 
       // Handle commands
       if (text === '/goonline') {
