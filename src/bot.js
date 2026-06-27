@@ -122,13 +122,17 @@ class GoChatBot extends ActivityHandler {
         }
 
         // Save Teams conversation reference for proactive messaging
+   // Save Teams conversation reference and replyToId for threading
         const conversationReference = JSON.stringify(TurnContext.getConversationReference(context.activity));
+        const replyToId = context.activity.replyToId || null;
+        console.log('replyToId:', replyToId);
+
         if (!session.rows[0].teams_conversation_ref) {
           await pool.query(
             `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2 WHERE id = $3`,
-            [teamsConversationId, conversationReference, sessionId]
+            [replyToId || teamsConversationId, conversationReference, sessionId]
           );
-          console.log('Saved Teams conversation reference for proactive messaging');
+          console.log('Saved Teams thread ID:', replyToId || teamsConversationId);
         }
 
         // Check for duplicate within 5 seconds
