@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GoChat Admin — Goidentity</title>
+<title>gochat Admin — goidentity</title>
 <link rel="stylesheet" href="admin.css">
 </head>
 <body>
@@ -20,19 +20,19 @@
         onerror="this.style.display='none';document.getElementById('loginLogoFb').style.display='flex'">
       <div class="login-logo-fallback" id="loginLogoFb">GI</div>
       <div class="login-brand-text">
-        <div class="login-brand-name">Goidentity</div>
+        <div class="login-brand-name">goidentity</div>
         <div class="login-brand-sub">Live chat admin</div>
       </div>
       <div class="live-pill"><div class="live-dot"></div>Live</div>
     </div>
 
     <div class="login-title">Welcome back</div>
-    <div class="login-sub">Sign in to your GoChat dashboard</div>
+    <div class="login-sub">Sign in to your gochat dashboard</div>
 
     <div class="field-group">
       <label class="field-label" for="secretInput">Admin password</label>
       <div class="field-wrap">
-        <span class="field-icon">🔒</span>
+       
         <input class="field-input" type="password" id="secretInput"
           placeholder="Enter your password"
           onkeydown="if(event.key==='Enter')login()">
@@ -45,7 +45,7 @@
     </button>
 
     <div class="security-row">
-      <span>🛡️</span>
+     
       <span>Secured with admin authentication</span>
     </div>
     <div class="login-error" id="loginError">Incorrect password. Please try again.</div>
@@ -72,26 +72,26 @@
           onerror="this.style.display='none';document.getElementById('sidebarLogoFb').style.display='flex'">
         <div class="sidebar-logo-fallback" id="sidebarLogoFb">GI</div>
         <div>
-          <div class="sidebar-brand-name">Goidentity</div>
-          <div class="sidebar-brand-sub">GoChat Admin</div>
+          <div class="sidebar-brand-name">goidentity</div>
+          <div class="sidebar-brand-sub">gochat Admin</div>
         </div>
       </div>
 
       <div class="sidebar-section">
         <div class="sidebar-section-label">Main menu</div>
         <div class="nav-item active" onclick="showPanel('chats',this)">
-          <span class="nav-icon">💬</span> Chat history
+          Chat history
           <span class="nav-badge" id="navBadgeChats">0</span>
         </div>
         <div class="nav-item" onclick="showPanel('leads',this)">
-          <span class="nav-icon">📥</span> Offline leads
+          Offline leads
           <span class="nav-badge amber" id="navBadgeLeads">0</span>
         </div>
         <div class="nav-item" onclick="showPanel('analytics',this)">
-          <span class="nav-icon">📊</span> Analytics
+          Analytics
         </div>
         <div class="nav-item" onclick="showPanel('agents',this)">
-          <span class="nav-icon">👥</span> Agents
+          Agents
         </div>
       </div>
 
@@ -113,7 +113,7 @@
         </div>
 
         <button class="btn-logout" onclick="logout()">
-          <span>🚪</span>
+          
           <span>Log out</span>
         </button>
       </div>
@@ -126,7 +126,7 @@
         <button class="hamburger" onclick="openSidebar()">☰</button>
         <div>
           <div class="topbar-title" id="topbarTitle">Chat history</div>
-          <div class="topbar-sub">Goidentity live chat dashboard</div>
+          <div class="topbar-sub">goidentity live chat dashboard</div>
         </div>
         <div class="topbar-right">
           <div class="search-bar">
@@ -135,10 +135,7 @@
             </svg>
             <input type="text" placeholder="Search…" id="globalSearch" oninput="onGlobalSearch()">
           </div>
-          <div class="notif-wrap">
-            <button class="topbar-icon-btn" title="Notifications">🔔</button>
-            <div class="notif-dot" id="notifDot"></div>
-          </div>
+      
           <button class="topbar-icon-btn" onclick="loadAll()" title="Refresh">↻</button>
         </div>
       </div>
