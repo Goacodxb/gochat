@@ -447,8 +447,9 @@ async function replyToTeamsThread(session, message, senderName) {
 
       const token = await getBotToken();
 
-      await axios.post(
-        `${serviceUrl}v3/conversations/${encodeURIComponent(conversationId)}/activities`,
+      const activityId = session.teams_activity_id;
+await axios.post(
+  `${serviceUrl}v3/conversations/${encodeURIComponent(conversationId)}/activities/${activityId}`,
         {
           type: 'message',
           attachments: [{
