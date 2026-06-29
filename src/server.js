@@ -303,7 +303,7 @@ app.get('/health', (req, res) => res.json({ ok: true }));
 // ── Bot Framework token (uses botframework.com — bypasses Conditional Access!)
 async function getBotToken() {
   const response = await axios.post(
-    'https://login.microsoftonline.com/botframework.com/oauth2/v2.0/token',
+'https://login.microsoftonline.com/67b4ecd2-df5b-4b66-8d2b-1203e33c7302/oauth2/v2.0/token',
     new URLSearchParams({
       grant_type: 'client_credentials',
       client_id: process.env.TEAMS_APP_ID,
