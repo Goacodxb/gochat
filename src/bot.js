@@ -127,13 +127,19 @@ class GoChatBot extends ActivityHandler {
           return;
         }
 
-        // Save conversation reference for proactive messaging
-        const conversationReference = JSON.stringify(TurnContext.getConversationReference(context.activity));
+        // Save 4 key fields for Bot Framework REST proactive messaging
+        const conversationRef = {
+          conversationId: context.activity.conversation?.id,
+          serviceUrl: context.activity.serviceUrl,
+          botId: context.activity.recipient?.id,
+          userId: context.activity.from?.id,
+        };
 
-        // Save base conversationId for lookup + messageId for thread replies
+        console.log('Saving conversation ref:', JSON.stringify(conversationRef));
+
         await pool.query(
           `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2, teams_activity_id = $3 WHERE id = $4`,
-          [teamsConversationId, conversationReference, messageId, sessionId]
+          [teamsConversationId, JSON.stringify(conversationRef), messageId, sessionId]
         );
         console.log('Saved conversation ID:', teamsConversationId, 'messageId:', messageId);
 
