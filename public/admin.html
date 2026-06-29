@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>gochat Admin — goidentity</title>
+<title>gochat admin — goidentity</title>
 <link rel="stylesheet" href="admin.css">
 </head>
 <body>
 
-<!-- ════════════════════ LOGIN ════════════════════ -->
+<!-- ══════════════ LOGIN ══════════════ -->
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-brand">
@@ -16,14 +16,14 @@
         class="login-logo-img"
         id="loginLogoImg"
         src="https://raw.githubusercontent.com/Goacodxb/gochat/main/public/img/goidentity.png"
-        alt="Goidentity logo"
+        alt="goidentity logo"
         onerror="this.style.display='none';document.getElementById('loginLogoFb').style.display='flex'">
-      <div class="login-logo-fallback" id="loginLogoFb">GI</div>
+      <div class="login-logo-fallback" id="loginLogoFb">gi</div>
       <div class="login-brand-text">
         <div class="login-brand-name">goidentity</div>
-        <div class="login-brand-sub">Live chat admin</div>
+        <div class="login-brand-sub">live chat admin</div>
       </div>
-      <div class="live-pill"><div class="live-dot"></div>Live</div>
+      <div class="live-pill"><div class="live-dot"></div>live</div>
     </div>
 
     <div class="login-title">Welcome back</div>
@@ -32,7 +32,7 @@
     <div class="field-group">
       <label class="field-label" for="secretInput">Admin password</label>
       <div class="field-wrap">
-       
+        <span class="field-icon">🔒</span>
         <input class="field-input" type="password" id="secretInput"
           placeholder="Enter your password"
           onkeydown="if(event.key==='Enter')login()">
@@ -45,22 +45,21 @@
     </button>
 
     <div class="security-row">
-     
+      <span>🛡️</span>
       <span>Secured with admin authentication</span>
     </div>
     <div class="login-error" id="loginError">Incorrect password. Please try again.</div>
   </div>
 </div>
 
-<!-- ════════════════════ APP ════════════════════ -->
+<!-- ══════════════ APP ══════════════ -->
 <div id="appScreen">
 
-  <!-- Mobile sidebar overlay -->
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
   <div class="app-layout">
 
-    <!-- ── SIDEBAR ── -->
+    <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
 
       <div class="sidebar-logo">
@@ -68,30 +67,34 @@
           class="sidebar-logo-img"
           id="sidebarLogoImg"
           src="https://raw.githubusercontent.com/Goacodxb/gochat/main/public/img/goidentity.png"
-          alt="Goidentity"
+          alt="goidentity"
           onerror="this.style.display='none';document.getElementById('sidebarLogoFb').style.display='flex'">
-        <div class="sidebar-logo-fallback" id="sidebarLogoFb">GI</div>
+        <div class="sidebar-logo-fallback" id="sidebarLogoFb">gi</div>
         <div>
           <div class="sidebar-brand-name">goidentity</div>
-          <div class="sidebar-brand-sub">gochat Admin</div>
+          <div class="sidebar-brand-sub">gochat admin</div>
         </div>
       </div>
 
       <div class="sidebar-section">
-        <div class="sidebar-section-label">Main menu</div>
+        <div class="sidebar-section-label">menu</div>
         <div class="nav-item active" onclick="showPanel('chats',this)">
-          Chat history
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span class="nav-label">chat history</span>
           <span class="nav-badge" id="navBadgeChats">0</span>
         </div>
         <div class="nav-item" onclick="showPanel('leads',this)">
-          Offline leads
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span class="nav-label">offline leads</span>
           <span class="nav-badge amber" id="navBadgeLeads">0</span>
         </div>
         <div class="nav-item" onclick="showPanel('analytics',this)">
-          Analytics
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span class="nav-label">analytics</span>
         </div>
         <div class="nav-item" onclick="showPanel('agents',this)">
-          Agents
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span class="nav-label">agents</span>
         </div>
       </div>
 
@@ -99,33 +102,33 @@
         <button class="avail-pill offline" id="availPill" onclick="toggleAvailability()">
           <div class="avail-pill-left">
             <div class="avail-dot"></div>
-            <span id="availText">Offline</span>
+            <span id="availText">offline</span>
           </div>
-          <span style="font-size:10px;opacity:0.7">Toggle</span>
+          <span class="avail-toggle-label">toggle</span>
         </button>
 
         <div class="agent-row">
           <div class="agent-avatar">PD</div>
           <div>
             <div class="agent-name">Praisy Daniel</div>
-            <div class="agent-role">Admin agent</div>
+            <div class="agent-role">admin agent</div>
           </div>
         </div>
 
         <button class="btn-logout" onclick="logout()">
-          
-          <span>Log out</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          log out
         </button>
       </div>
     </aside>
 
-    <!-- ── MAIN ── -->
+    <!-- MAIN -->
     <div class="main">
 
       <div class="topbar">
         <button class="hamburger" onclick="openSidebar()">☰</button>
         <div>
-          <div class="topbar-title" id="topbarTitle">Chat history</div>
+          <div class="topbar-title" id="topbarTitle">chat history</div>
           <div class="topbar-sub">goidentity live chat dashboard</div>
         </div>
         <div class="topbar-right">
@@ -135,8 +138,9 @@
             </svg>
             <input type="text" placeholder="Search…" id="globalSearch" oninput="onGlobalSearch()">
           </div>
-      
-          <button class="topbar-icon-btn" onclick="loadAll()" title="Refresh">↻</button>
+          <button class="topbar-icon-btn" onclick="loadAll()" title="Refresh">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          </button>
         </div>
       </div>
 
@@ -144,47 +148,31 @@
 
         <div class="page-header">
           <div>
-            <div class="page-heading" id="pageHeading">Chat history</div>
-            <div class="page-sub">All visitor conversations</div>
+            <div class="page-heading" id="pageHeading">chat history</div>
+            <div class="page-sub">all visitor conversations</div>
           </div>
         </div>
 
-        <!-- STATS -->
+        <!-- STATS — no icons, no trend badges -->
         <div class="stats-row">
-          <div class="stat-card">
-            <div class="stat-top">
-              <div class="stat-icon-wrap blue">💬</div>
-              <span class="stat-trend up">↑ 12%</span>
-            </div>
+          <div class="stat-card sc-blue">
             <div class="stat-num" id="statTotal">—</div>
-            <div class="stat-label">Total chats</div>
+            <div class="stat-label">total chats</div>
             <div class="stat-mini-chart" id="chartTotal"></div>
           </div>
-          <div class="stat-card">
-            <div class="stat-top">
-              <div class="stat-icon-wrap green">✅</div>
-              <span class="stat-trend up">↑ 8%</span>
-            </div>
+          <div class="stat-card sc-green">
             <div class="stat-num" id="statActive">—</div>
-            <div class="stat-label">Active now</div>
+            <div class="stat-label">active now</div>
             <div class="stat-mini-chart" id="chartActive"></div>
           </div>
-          <div class="stat-card">
-            <div class="stat-top">
-              <div class="stat-icon-wrap amber">⏳</div>
-              <span class="stat-trend down">↓ 3%</span>
-            </div>
+          <div class="stat-card sc-amber">
             <div class="stat-num" id="statWaiting">—</div>
-            <div class="stat-label">Waiting</div>
+            <div class="stat-label">waiting</div>
             <div class="stat-mini-chart" id="chartWaiting"></div>
           </div>
-          <div class="stat-card">
-            <div class="stat-top">
-              <div class="stat-icon-wrap purple">📥</div>
-              <span class="stat-trend up">↑ 2</span>
-            </div>
+          <div class="stat-card sc-purple">
             <div class="stat-num" id="statLeads">—</div>
-            <div class="stat-label">Offline leads</div>
+            <div class="stat-label">offline leads</div>
             <div class="stat-mini-chart" id="chartLeads"></div>
           </div>
         </div>
@@ -196,15 +184,15 @@
           <div class="card">
             <div class="card-header">
               <div>
-                <div class="card-title">Conversations</div>
-                <div class="card-sub">All incoming chat sessions</div>
+                <div class="card-title">conversations</div>
+                <div class="card-sub">all incoming chat sessions</div>
               </div>
               <div class="card-tabs">
                 <button class="ctab active" onclick="switchTab('sessions',this)">
-                  Chats <span class="ctab-count" id="tcSessions">0</span>
+                  chats <span class="ctab-count" id="tcSessions">0</span>
                 </button>
                 <button class="ctab" onclick="switchTab('leads',this)">
-                  Leads <span class="ctab-count" id="tcLeads">0</span>
+                  leads <span class="ctab-count" id="tcLeads">0</span>
                 </button>
               </div>
             </div>
@@ -214,13 +202,13 @@
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
                 </svg>
-                <input type="text" placeholder="Search visitor or email…" id="tableSearch" oninput="onTableSearch()">
+                <input type="text" placeholder="search visitor or email…" id="tableSearch" oninput="onTableSearch()">
               </div>
               <select class="tbl-filter" id="statusFilter" onchange="onTableSearch()">
-                <option value="">All statuses</option>
-                <option value="active">Active</option>
-                <option value="waiting">Waiting</option>
-                <option value="closed">Closed</option>
+                <option value="">all statuses</option>
+                <option value="active">active</option>
+                <option value="waiting">waiting</option>
+                <option value="closed">closed</option>
               </select>
               <span class="result-info" id="resultInfo"></span>
             </div>
@@ -229,17 +217,17 @@
               <table>
                 <thead>
                   <tr>
-                    <th>Visitor</th>
-                    <th>Status</th>
-                    <th class="col-agent">Agent</th>
-                    <th class="col-date">Started</th>
+                    <th>visitor</th>
+                    <th>status</th>
+                    <th class="col-agent">agent</th>
+                    <th class="col-date">started</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody id="tableBody">
                   <tr><td colspan="5">
                     <div class="empty-state">
-                      <div class="empty-icon">💬</div>
+                      <div class="empty-icon">·  ·  ·</div>
                       <div class="empty-title">Loading…</div>
                     </div>
                   </td></tr>
@@ -249,7 +237,7 @@
 
             <div class="pagination">
               <div class="page-left">
-                Rows:
+                rows:
                 <select onchange="setPageSize(+this.value)">
                   <option value="10">10</option>
                   <option value="25">25</option>
@@ -266,24 +254,24 @@
 
             <div class="panel">
               <div class="panel-header">
-                <div class="panel-title">Live activity</div>
-                <span class="panel-link" onclick="loadAll()">Refresh</span>
+                <div class="panel-title">live activity</div>
+                <span class="panel-link" onclick="loadAll()">refresh</span>
               </div>
               <div class="activity-list" id="activityList">
-                <div style="padding:20px;text-align:center;color:var(--text-3);font-size:12px">Loading…</div>
+                <div style="padding:20px;text-align:center;color:var(--text-3);font-size:12px">loading…</div>
               </div>
             </div>
 
             <div class="panel">
               <div class="panel-header">
-                <div class="panel-title">Agents</div>
+                <div class="panel-title">agents</div>
               </div>
               <div id="agentsList">
                 <div class="agent-item">
                   <div class="agent-item-avatar av-0">PD</div>
                   <div>
                     <div class="agent-item-name">Praisy Daniel</div>
-                    <div class="agent-item-stat">Lead agent</div>
+                    <div class="agent-item-stat">lead agent</div>
                   </div>
                   <div class="agent-chats" id="pdChats">—</div>
                 </div>
@@ -297,7 +285,7 @@
   </div>
 </div>
 
-<!-- ════════════════════ CHAT MODAL ════════════════════ -->
+<!-- ══════════════ MODAL ══════════════ -->
 <div class="modal-overlay" id="chatModal">
   <div class="modal-box">
     <div class="modal-head">
@@ -309,18 +297,18 @@
         </div>
       </div>
       <div class="modal-actions">
-        <button class="btn-end" id="btnEnd" onclick="closeSession()" style="display:none">End chat</button>
+        <button class="btn-end" id="btnEnd" onclick="closeSession()" style="display:none">end chat</button>
         <button class="btn-close-m" onclick="closeModal()">✕</button>
       </div>
     </div>
     <div class="modal-messages" id="modalMsgs"></div>
     <div class="modal-footer" id="modalFooter" style="display:none">
-      <div class="reply-label">Send a reply</div>
+      <div class="reply-label">send a reply</div>
       <div class="reply-row">
         <textarea class="reply-ta" id="replyInput"
           placeholder="Type your message… (Enter to send)" rows="2"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendReply()}"></textarea>
-        <button class="btn-send" id="btnSend" onclick="sendReply()">Send →</button>
+        <button class="btn-send" id="btnSend" onclick="sendReply()">send →</button>
       </div>
     </div>
   </div>
@@ -329,15 +317,15 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ── STATE ──────────────────────────────────────────────────
+// ── STATE ──
 let secret = '', availability = false;
 let allSessions = [], allLeads = [], filtered = [];
 let curTab = 'sessions';
 let page = 1, pageSize = 10;
 let curSessionId = null, msgTimer = null;
 
-// ── SIDEBAR (mobile) ───────────────────────────────────────
-function openSidebar() {
+// ── SIDEBAR (mobile) ──
+function openSidebar()  {
   document.getElementById('sidebar').classList.add('open');
   document.getElementById('sidebarOverlay').classList.add('show');
 }
@@ -346,19 +334,18 @@ function closeSidebar() {
   document.getElementById('sidebarOverlay').classList.remove('show');
 }
 
-// ── LOGOUT ─────────────────────────────────────────────────
+// ── LOGOUT ──
 function logout() {
-  if (!confirm('Log out of GoChat Admin?')) return;
-  secret = '';
-  allSessions = []; allLeads = []; filtered = [];
-  document.getElementById('appScreen').style.display = 'none';
+  if (!confirm('log out of gochat admin?')) return;
+  secret = ''; allSessions = []; allLeads = []; filtered = [];
+  document.getElementById('appScreen').style.display   = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('secretInput').value = '';
   document.getElementById('loginError').style.display = 'none';
   closeSidebar();
 }
 
-// ── MINI CHARTS ────────────────────────────────────────────
+// ── MINI CHARTS ──
 function renderMiniChart(id, color, vals) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -369,19 +356,20 @@ function renderMiniChart(id, color, vals) {
   }).join('');
 }
 function seedCharts(total, active, waiting, leads) {
-  const rnd = (base, n) => Array.from({length:n},(_,i)=>Math.max(0,Math.round(base*(0.4+Math.random()*0.6)*(i/n))));
+  const rnd = (base, n) =>
+    Array.from({length:n}, (_,i) => Math.max(0, Math.round(base * (0.4 + Math.random()*0.6) * (i/n))));
   renderMiniChart('chartTotal',   'blue',   [...rnd(total,6),   total]);
   renderMiniChart('chartActive',  'green',  [...rnd(active,6),  active]);
   renderMiniChart('chartWaiting', 'amber',  [...rnd(waiting,6), waiting]);
   renderMiniChart('chartLeads',   'purple', [...rnd(leads,6),   leads]);
 }
 
-// ── LOGIN ──────────────────────────────────────────────────
+// ── LOGIN ──
 function login() {
   secret = document.getElementById('secretInput').value;
   const btn = document.querySelector('.btn-signin');
   const txt = document.getElementById('signinText');
-  btn.disabled = true; txt.textContent = 'Signing in…';
+  btn.disabled = true; txt.textContent = 'signing in…';
   fetch('/api/admin/sessions', { headers: {'x-admin-secret': secret} })
     .then(r => {
       btn.disabled = false; txt.textContent = 'Sign in to dashboard';
@@ -390,30 +378,29 @@ function login() {
       }
       document.getElementById('loginError').style.display = 'none';
       document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('appScreen').style.display = 'block';
+      document.getElementById('appScreen').style.display   = 'block';
       loadAll();
       setInterval(loadAll, 10000);
     })
     .catch(() => { btn.disabled = false; txt.textContent = 'Sign in to dashboard'; });
 }
 
-// ── LOAD ALL ───────────────────────────────────────────────
+// ── LOAD ALL ──
 function loadAll() { loadSessions(); loadLeads(); loadAvailability(); }
 
 function loadAvailability() {
   fetch('/api/availability').then(r=>r.json()).then(d => {
     availability = d.online;
     const pill = document.getElementById('availPill');
-    const txt  = document.getElementById('availText');
+    document.getElementById('availText').textContent = d.online ? 'online' : 'offline';
     pill.className = 'avail-pill ' + (d.online ? 'online' : 'offline');
-    txt.textContent = d.online ? 'Online' : 'Offline';
   }).catch(()=>{});
 }
 
 function toggleAvailability() {
   fetch('/api/admin/availability', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json','x-admin-secret':secret},
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-admin-secret':secret},
     body: JSON.stringify({online: !availability})
   }).then(()=> loadAvailability());
 }
@@ -424,16 +411,15 @@ function loadSessions() {
       allSessions = d.sessions || [];
       const act  = allSessions.filter(s=>s.status==='active').length;
       const wait = allSessions.filter(s=>s.status==='waiting').length;
-      document.getElementById('statTotal').textContent   = allSessions.length;
-      document.getElementById('statActive').textContent  = act;
-      document.getElementById('statWaiting').textContent = wait;
-      document.getElementById('tcSessions').textContent  = allSessions.length;
+      document.getElementById('statTotal').textContent    = allSessions.length;
+      document.getElementById('statActive').textContent   = act;
+      document.getElementById('statWaiting').textContent  = wait;
+      document.getElementById('tcSessions').textContent   = allSessions.length;
       document.getElementById('navBadgeChats').textContent = allSessions.length;
-      document.getElementById('pdChats').textContent = allSessions.filter(s=>s.claimed_by).length;
-      document.getElementById('notifDot').style.display = wait > 0 ? '' : 'none';
+      document.getElementById('pdChats').textContent      = allSessions.filter(s=>s.claimed_by).length;
       seedCharts(allSessions.length, act, wait, +(document.getElementById('statLeads').textContent)||0);
       renderActivity();
-      if (curTab === 'sessions') applyFilter();
+      if (curTab==='sessions') applyFilter();
     }).catch(()=>{});
 }
 
@@ -441,39 +427,35 @@ function loadLeads() {
   fetch('/api/admin/leads', { headers: {'x-admin-secret':secret} })
     .then(r=>r.json()).then(d => {
       allLeads = d.leads || [];
-      document.getElementById('statLeads').textContent    = allLeads.length;
-      document.getElementById('tcLeads').textContent      = allLeads.length;
+      document.getElementById('statLeads').textContent     = allLeads.length;
+      document.getElementById('tcLeads').textContent       = allLeads.length;
       document.getElementById('navBadgeLeads').textContent = allLeads.length;
-      if (curTab === 'leads') applyFilter();
+      if (curTab==='leads') applyFilter();
     }).catch(()=>{});
 }
 
-// ── FILTER ─────────────────────────────────────────────────
+// ── FILTER ──
 function onGlobalSearch() {
   document.getElementById('tableSearch').value = document.getElementById('globalSearch').value;
   onTableSearch();
 }
-function onTableSearch() { page = 1; applyFilter(); }
+function onTableSearch() { page=1; applyFilter(); }
 
 function applyFilter() {
-  const q  = (document.getElementById('tableSearch').value || '').toLowerCase();
+  const q  = (document.getElementById('tableSearch').value||'').toLowerCase();
   const st = document.getElementById('statusFilter').value;
-  const src = curTab === 'sessions' ? allSessions : allLeads;
-
+  const src = curTab==='sessions' ? allSessions : allLeads;
   filtered = src.filter(r => {
-    const name  = (r.visitor_name || r.name  || '').toLowerCase();
-    const email = (r.visitor_email || r.email || '').toLowerCase();
-    const matchQ  = !q  || name.includes(q) || email.includes(q);
-    const matchSt = !st || r.status === st;
-    return matchQ && matchSt;
+    const name  = (r.visitor_name||r.name||'').toLowerCase();
+    const email = (r.visitor_email||r.email||'').toLowerCase();
+    return (!q||name.includes(q)||email.includes(q)) && (!st||r.status===st);
   });
-
   document.getElementById('resultInfo').textContent =
     filtered.length + ' result' + (filtered.length!==1?'s':'');
   renderTable();
 }
 
-// ── RENDER TABLE ───────────────────────────────────────────
+// ── RENDER TABLE ──
 function renderTable() {
   const start = (page-1)*pageSize;
   const slice = filtered.slice(start, start+pageSize);
@@ -481,20 +463,20 @@ function renderTable() {
 
   if (!slice.length) {
     body.innerHTML = `<tr><td colspan="5"><div class="empty-state">
-      <div class="empty-icon">🔍</div>
-      <div class="empty-title">No results found</div>
-      <div class="empty-sub">Try adjusting your search or filter</div>
+      <div class="empty-icon">— — —</div>
+      <div class="empty-title">no results found</div>
+      <div class="empty-sub">try adjusting your search or filter</div>
     </div></td></tr>`;
-    document.getElementById('pageBtns').innerHTML = '';
-    document.getElementById('pageRangeInfo').textContent = '';
+    document.getElementById('pageBtns').innerHTML='';
+    document.getElementById('pageRangeInfo').textContent='';
     return;
   }
 
-  if (curTab === 'sessions') {
+  if (curTab==='sessions') {
     body.innerHTML = slice.map(s => {
       const init  = initials(s.visitor_name);
-      const avCls = 'av-' + (hashStr(s.visitor_name) % 8);
-      const isLive = s.status==='active' || s.status==='waiting';
+      const avCls = 'av-' + (hashStr(s.visitor_name)%8);
+      const isLive = s.status==='active'||s.status==='waiting';
       return `<tr onclick="viewChat('${s.id}','${esc(s.visitor_name)}','${esc(s.visitor_email||'')}','${s.status}')">
         <td>
           <div class="visitor-cell">
@@ -506,18 +488,18 @@ function renderTable() {
           </div>
         </td>
         <td><span class="badge ${s.status}">${s.status}</span></td>
-        <td class="tbl-agent col-agent">${s.claimed_by ? esc(s.claimed_by) : '<span style="color:var(--text-3)">Unclaimed</span>'}</td>
+        <td class="tbl-agent col-agent">${s.claimed_by?esc(s.claimed_by):'<span style="color:var(--text-3)">unclaimed</span>'}</td>
         <td class="tbl-date col-date">${formatDate(s.created_at)}</td>
         <td>
           <button class="${isLive?'btn-reply':'btn-view'}"
             onclick="event.stopPropagation();viewChat('${s.id}','${esc(s.visitor_name)}','${esc(s.visitor_email||'')}','${s.status}')">
-            ${isLive ? '💬 Reply' : '👁 View'}
+            ${isLive?'reply':'view'}
           </button>
         </td>
       </tr>`;
     }).join('');
   } else {
-    body.innerHTML = slice.map(l => `<tr>
+    body.innerHTML = slice.map(l=>`<tr>
       <td>
         <div class="visitor-cell">
           <div class="tbl-avatar av-${hashStr(l.name)%8}">${esc(initials(l.name))}</div>
@@ -535,84 +517,78 @@ function renderTable() {
       <td class="tbl-date col-date">${formatDate(l.created_at)}</td>
     </tr>`).join('');
   }
-
   renderPagination();
 }
 
 function renderPagination() {
-  const total      = filtered.length;
-  const totalPages = Math.ceil(total / pageSize);
-  const start = (page-1)*pageSize + 1;
+  const total = filtered.length;
+  const totalPages = Math.ceil(total/pageSize);
+  const start = (page-1)*pageSize+1;
   const end   = Math.min(page*pageSize, total);
   document.getElementById('pageRangeInfo').textContent = `${start}–${end} of ${total}`;
-
   const btns = document.getElementById('pageBtns');
-  if (totalPages <= 1) { btns.innerHTML=''; return; }
-
-  let html = `<button class="pg-btn" onclick="goPage(${page-1})" ${page===1?'disabled':''}>‹</button>`;
-  buildRange(page, totalPages).forEach(p => {
-    if (p==='…') html += `<button class="pg-btn" disabled>…</button>`;
-    else html += `<button class="pg-btn${p===page?' active':''}" onclick="goPage(${p})">${p}</button>`;
+  if (totalPages<=1) { btns.innerHTML=''; return; }
+  let html=`<button class="pg-btn" onclick="goPage(${page-1})" ${page===1?'disabled':''}>‹</button>`;
+  buildRange(page,totalPages).forEach(p=>{
+    if(p==='…') html+=`<button class="pg-btn" disabled>…</button>`;
+    else html+=`<button class="pg-btn${p===page?' active':''}" onclick="goPage(${p})">${p}</button>`;
   });
-  html += `<button class="pg-btn" onclick="goPage(${page+1})" ${page===totalPages?'disabled':''}>›</button>`;
-  btns.innerHTML = html;
+  html+=`<button class="pg-btn" onclick="goPage(${page+1})" ${page===totalPages?'disabled':''}>›</button>`;
+  btns.innerHTML=html;
 }
 
-function buildRange(cur, total) {
+function buildRange(cur,total){
   const r=[]; let last=0;
-  for (let i=1; i<=total; i++) {
-    if (i===1||i===total||Math.abs(i-cur)<=1) {
-      if (last && i-last>1) r.push('…');
-      r.push(i); last=i;
+  for(let i=1;i<=total;i++){
+    if(i===1||i===total||Math.abs(i-cur)<=1){
+      if(last&&i-last>1)r.push('…');
+      r.push(i);last=i;
     }
   }
   return r;
 }
 
-function goPage(p) {
-  const total = Math.ceil(filtered.length/pageSize);
-  if (p<1||p>total) return;
-  page = p; renderTable();
+function goPage(p){
+  if(p<1||p>Math.ceil(filtered.length/pageSize))return;
+  page=p; renderTable();
 }
-function setPageSize(v) { pageSize=v; page=1; renderTable(); }
+function setPageSize(v){pageSize=v;page=1;renderTable();}
 
-// ── TABS / PANELS ──────────────────────────────────────────
-function switchTab(tab, el) {
-  curTab = tab; page = 1;
+// ── TABS / PANELS ──
+function switchTab(tab,el){
+  curTab=tab; page=1;
   document.querySelectorAll('.ctab').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('statusFilter').style.display = tab==='sessions' ? '' : 'none';
+  document.getElementById('statusFilter').style.display=tab==='sessions'?'':'none';
   applyFilter();
 }
 
-function showPanel(panel, el) {
+function showPanel(panel,el){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   el.classList.add('active');
-  if (panel==='chats') {
-    document.getElementById('topbarTitle').textContent  = 'Chat history';
-    document.getElementById('pageHeading').textContent  = 'Chat history';
-    switchTab('sessions', document.querySelectorAll('.ctab')[0]);
+  if(panel==='chats'){
+    document.getElementById('topbarTitle').textContent='chat history';
+    document.getElementById('pageHeading').textContent='chat history';
+    switchTab('sessions',document.querySelectorAll('.ctab')[0]);
   }
-  if (panel==='leads') {
-    document.getElementById('topbarTitle').textContent  = 'Offline leads';
-    document.getElementById('pageHeading').textContent  = 'Offline leads';
-    switchTab('leads', document.querySelectorAll('.ctab')[1]);
+  if(panel==='leads'){
+    document.getElementById('topbarTitle').textContent='offline leads';
+    document.getElementById('pageHeading').textContent='offline leads';
+    switchTab('leads',document.querySelectorAll('.ctab')[1]);
   }
   closeSidebar();
 }
 
-// ── ACTIVITY ───────────────────────────────────────────────
-function renderActivity() {
-  const recent = [...allSessions]
-    .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))
-    .slice(0,5);
-  const colors = {active:'green', waiting:'amber', closed:'blue'};
-  const el = document.getElementById('activityList');
-  if (!recent.length) {
-    el.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-3);font-size:12px">No activity yet</div>';
+// ── ACTIVITY ──
+function renderActivity(){
+  const recent=[...allSessions].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,5);
+  const colors={active:'green',waiting:'amber',closed:'blue'};
+  const el=document.getElementById('activityList');
+  if(!recent.length){
+    el.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-3);font-size:12px">no activity yet</div>';
     return;
   }
-  el.innerHTML = recent.map(s=>`
+  el.innerHTML=recent.map(s=>`
     <div class="activity-item" onclick="viewChat('${s.id}','${esc(s.visitor_name)}','${esc(s.visitor_email||'')}','${s.status}')">
       <div class="act-dot-wrap"><div class="act-dot ${colors[s.status]||'blue'}"></div></div>
       <div class="act-text"><strong>${esc(s.visitor_name)}</strong> started a chat</div>
@@ -620,97 +596,88 @@ function renderActivity() {
     </div>`).join('');
 }
 
-// ── MODAL ──────────────────────────────────────────────────
-function viewChat(id, name, email, status) {
-  curSessionId = id;
-  const avCls = 'av-' + (hashStr(name) % 8);
-  document.getElementById('modalAv').textContent  = initials(name);
-  document.getElementById('modalAv').className    = 'modal-avatar ' + avCls;
-  document.getElementById('modalName').textContent = name;
-  document.getElementById('modalMeta').textContent = email || 'No email';
-  const isLive = status==='active'||status==='waiting';
-  document.getElementById('btnEnd').style.display        = isLive ? '' : 'none';
-  document.getElementById('modalFooter').style.display   = isLive ? '' : 'none';
+// ── MODAL ──
+function viewChat(id,name,email,status){
+  curSessionId=id;
+  const avCls='av-'+(hashStr(name)%8);
+  document.getElementById('modalAv').textContent=initials(name);
+  document.getElementById('modalAv').className='modal-avatar '+avCls;
+  document.getElementById('modalName').textContent=name;
+  document.getElementById('modalMeta').textContent=email||'no email';
+  const isLive=status==='active'||status==='waiting';
+  document.getElementById('btnEnd').style.display=isLive?'':'none';
+  document.getElementById('modalFooter').style.display=isLive?'':'none';
   document.getElementById('chatModal').classList.add('open');
   loadMsgs();
-  if (msgTimer) clearInterval(msgTimer);
-  if (isLive) msgTimer = setInterval(loadMsgs, 3000);
+  if(msgTimer)clearInterval(msgTimer);
+  if(isLive)msgTimer=setInterval(loadMsgs,3000);
 }
 
-function loadMsgs() {
-  if (!curSessionId) return;
-  fetch(`/api/admin/sessions/${curSessionId}`, {headers:{'x-admin-secret':secret}})
-    .then(r=>r.json()).then(d => {
-      const msgs = d.messages || [];
-      const el   = document.getElementById('modalMsgs');
-      if (!msgs.length) {
-        el.innerHTML='<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-sub">No messages yet</div></div>';
+function loadMsgs(){
+  if(!curSessionId)return;
+  fetch(`/api/admin/sessions/${curSessionId}`,{headers:{'x-admin-secret':secret}})
+    .then(r=>r.json()).then(d=>{
+      const msgs=d.messages||[];
+      const el=document.getElementById('modalMsgs');
+      if(!msgs.length){
+        el.innerHTML='<div class="empty-state"><div class="empty-title">no messages yet</div></div>';
         return;
       }
-      el.innerHTML = msgs.map(m=>`
+      el.innerHTML=msgs.map(m=>`
         <div class="msg-row ${m.sender_type}">
           <div class="msg-meta">${esc(m.sender_name)} · ${formatDate(m.created_at)}</div>
           <div class="msg-bubble">${esc(m.content)}</div>
         </div>`).join('');
-      el.scrollTop = el.scrollHeight;
+      el.scrollTop=el.scrollHeight;
     }).catch(()=>{});
 }
 
-function sendReply() {
-  const inp = document.getElementById('replyInput');
-  const content = inp.value.trim();
-  if (!content||!curSessionId) return;
-  const btn = document.getElementById('btnSend');
-  btn.disabled=true; btn.textContent='Sending…';
-  fetch('/api/admin/reply', {
+function sendReply(){
+  const inp=document.getElementById('replyInput');
+  const content=inp.value.trim();
+  if(!content||!curSessionId)return;
+  const btn=document.getElementById('btnSend');
+  btn.disabled=true; btn.textContent='sending…';
+  fetch('/api/admin/reply',{
     method:'POST',
     headers:{'Content-Type':'application/json','x-admin-secret':secret},
-    body: JSON.stringify({sessionId:curSessionId, content, agentName:'Agent'})
+    body:JSON.stringify({sessionId:curSessionId,content,agentName:'Agent'})
   }).then(()=>{
-    inp.value=''; btn.disabled=false; btn.textContent='Send →';
-    loadMsgs(); showToast('✅ Reply sent');
-  }).catch(()=>{ btn.disabled=false; btn.textContent='Send →'; });
+    inp.value='';btn.disabled=false;btn.textContent='send →';
+    loadMsgs();showToast('reply sent');
+  }).catch(()=>{btn.disabled=false;btn.textContent='send →';});
 }
 
-function closeSession() {
-  if (!curSessionId||!confirm('End this chat?')) return;
+function closeSession(){
+  if(!curSessionId||!confirm('end this chat?'))return;
   fetch('/api/admin/close',{
     method:'POST',
     headers:{'Content-Type':'application/json','x-admin-secret':secret},
-    body: JSON.stringify({sessionId:curSessionId})
-  }).then(()=>{ closeModal(); loadAll(); showToast('Chat ended'); });
+    body:JSON.stringify({sessionId:curSessionId})
+  }).then(()=>{closeModal();loadAll();showToast('chat ended');});
 }
 
-function closeModal() {
+function closeModal(){
   document.getElementById('chatModal').classList.remove('open');
-  if (msgTimer) { clearInterval(msgTimer); msgTimer=null; }
-  curSessionId = null;
+  if(msgTimer){clearInterval(msgTimer);msgTimer=null;}
+  curSessionId=null;
 }
-
-window.addEventListener('click', e => {
-  if (e.target===document.getElementById('chatModal')) closeModal();
+window.addEventListener('click',e=>{
+  if(e.target===document.getElementById('chatModal'))closeModal();
 });
 
-// ── TOAST ──────────────────────────────────────────────────
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2600);
+// ── TOAST ──
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2600);
 }
 
-// ── UTILS ──────────────────────────────────────────────────
-function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-function formatDate(iso) {
-  return new Date(iso).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
-}
-function initials(name) {
-  return (name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-}
-function hashStr(s) {
-  let h=0; for(let c of String(s||'')) h=(h*31+c.charCodeAt(0))&0xffff; return h;
-}
+// ── UTILS ──
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function formatDate(iso){return new Date(iso).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
+function initials(name){return(name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);}
+function hashStr(s){let h=0;for(let c of String(s||''))h=(h*31+c.charCodeAt(0))&0xffff;return h;}
 </script>
 </body>
 </html>
