@@ -62,26 +62,10 @@ class GoChatBot extends ActivityHandler {
 
       // If no session ID in message, look up by base Teams conversation ID
       if (!sessionId && teamsConversationId) {
-      
         const sessionByThread = await pool.query(
-  `SELECT id, claimed_by FROM sessions WHERE teams_activity_id = $1 AND status != 'closed' ORDER BY created_at DESC LIMIT 1`,
-  [messageId]
-).catch(() => ({ rows: [] }));
-
-// Fallback to conversation ID if not found by messageId
-if (sessionByThread.rows.length === 0) {
-  const sessionByConv = await pool.query(
-    `SELECT id, claimed_by FROM sessions WHERE teams_thread_id = $1 AND status != 'closed' ORDER BY created_at DESC LIMIT 1`,
-    [teamsConversationId]
-  ).catch(() => ({ rows: [] }));
-  if (sessionByConv.rows.length > 0) {
-    sessionId = sessionByConv.rows[0].id;
-    console.log('Found session by conversation ID:', sessionId);
-  }
-} else {
-  sessionId = sessionByThread.rows[0].id;
-  console.log('Found session by messageId:', sessionId);
-}
+          `SELECT id, claimed_by FROM sessions WHERE teams_thread_id = $1 AND status != 'closed' ORDER BY created_at DESC LIMIT 1`,
+          [teamsConversationId]
+        ).catch(() => ({ rows: [] }));
 
         if (sessionByThread.rows.length > 0) {
           sessionId = sessionByThread.rows[0].id;
@@ -143,29 +127,29 @@ if (sessionByThread.rows.length === 0) {
           return;
         }
 
-        // Save conversation reference for proactive messaging
-        const conversationReference = JSON.stringify(TurnContext.getConversationReference(context.activity));
+        // Save EXACT conversation reference from TurnContext
+        const conversationRef = TurnContext.getConversationReference(context.activity);
+        console.log('Saving exact conversation ref serviceUrl:', conversationRef.serviceUrl);
 
-        // Save base conversationId for lookup + messageId for thread replies
         if (session.rows[0].status === 'waiting') {
-  // First reply — save everything including activity ID
-  await pool.query(
-    `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2, teams_activity_id = $3 WHERE id = $4`,
-    [teamsConversationId, JSON.stringify(conversationRef), messageId, sessionId]
-  );
-} else {
-  // Subsequent replies — only update conversation ref, NOT activity ID
-  await pool.query(
-    `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2 WHERE id = $3`,
-    [teamsConversationId, JSON.stringify(conversationRef), sessionId]
-  );
-}
-console.log('Saved conversation ID:', teamsConversationId, 'messageId:', messageId);
-        console.log('Saved conversation ID:', teamsConversationId, 'messageId:', messageId);
+          // First reply — save everything including activity ID
+          await pool.query(
+            `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2, teams_activity_id = $3 WHERE id = $4`,
+            [teamsConversationId, JSON.stringify(conversationRef), messageId, sessionId]
+          );
+          console.log('Saved first reply — teams_activity_id:', messageId);
+        } else {
+          // Subsequent replies — only update conversation ref, NOT activity ID
+          await pool.query(
+            `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2 WHERE id = $3`,
+            [teamsConversationId, JSON.stringify(conversationRef), sessionId]
+          );
+          console.log('Updated conversation ref — keeping original teams_activity_id');
+        }
 
         // Check for duplicate within 5 seconds
         const existing = await pool.query(
-          `SELECT id FROM messages WHERE session_id=$1 AND sender_name=$2 AND content=$3 AND created_at > NOW() - INTERVAL '30 seconds'`,
+          `SELECT id FROM messages WHERE session_id=$1 AND sender_name=$2 AND content=$3 AND created_at > NOW() - INTERVAL '5 seconds'`,
           [sessionId, from, messageContent]
         );
 
