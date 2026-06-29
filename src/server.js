@@ -300,10 +300,10 @@ app.post('/api/messages', async (req, res) => {
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
-// ── Bot Framework token (uses botframework.com — bypasses Conditional Access!)
+// ── Bot Framework token (uses Goaco tenant ID)
 async function getBotToken() {
   const response = await axios.post(
-'https://login.microsoftonline.com/67b4ecd2-df5b-4b66-8d2b-1203e33c7302/oauth2/v2.0/token'
+    'https://login.microsoftonline.com/67b4ecd2-df5b-4b66-8d2b-1203e33c7302/oauth2/v2.0/token',
     new URLSearchParams({
       grant_type: 'client_credentials',
       client_id: process.env.TEAMS_APP_ID,
@@ -436,36 +436,26 @@ async function replyToTeamsThread(session, message, senderName) {
     ],
   };
 
-  if (session.teams_conversation_ref) {
+  if (session.teams_conversation_ref && global.botAdapter) {
     try {
-      const ref = JSON.parse(session.teams_conversation_ref);
-      const serviceUrl = ref.serviceUrl;
+      const conversationRef = JSON.parse(session.teams_conversation_ref);
+      console.log('Using exact conversation reference, serviceUrl:', conversationRef.serviceUrl);
 
-      // Use base conversationId WITHOUT messageid suffix
-      const fullConversationId = ref.conversationId || session.teams_thread_id;
-      const conversationId = fullConversationId.split(';messageid=')[0];
-
-      console.log('Using Bot Framework REST conversationId:', conversationId);
-
-      const token = await getBotToken();
-
-      await axios.post(
-        `${serviceUrl}v3/conversations/${encodeURIComponent(conversationId)}/activities`,
-        {
+      await global.botAdapter.continueConversation(conversationRef, async (context) => {
+        await context.sendActivity({
           type: 'message',
           attachments: [{
             contentType: 'application/vnd.microsoft.card.adaptive',
             content: adaptiveCard,
           }],
-        },
-        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
-      );
+        });
+      });
 
-      console.log('Visitor follow-up sent via Bot Framework REST ✅');
+      console.log('Visitor follow-up sent via continueConversation ✅');
       return;
 
     } catch (err) {
-      console.error('Bot Framework REST error:', err.response?.data || err.message);
+      console.error('continueConversation error:', err.message);
       console.log('Falling back to webhook...');
     }
   }
