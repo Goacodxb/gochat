@@ -303,7 +303,22 @@ app.post('/api/messages', async (req, res) => {
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
-// ── Graph API token
+// ── Bot Framework token (uses botframework.com — avoids Conditional Access!)
+async function getBotToken() {
+  const response = await axios.post(
+    'https://login.microsoftonline.com/botframework.com/oauth2/v2.0/token',
+    new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: process.env.TEAMS_APP_ID,
+      client_secret: process.env.TEAMS_APP_PASSWORD,
+      scope: 'https://api.botframework.com/.default',
+    }),
+    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+  );
+  return response.data.access_token;
+}
+
+// ── Graph API token (for Graph API calls)
 async function getGraphToken() {
   const response = await axios.post(
     `https://login.microsoftonline.com/${process.env.APP_TENANT_ID}/oauth2/v2.0/token`,
@@ -405,7 +420,7 @@ async function postToTeams(sessionId, name, email, message) {
     .catch(err => console.error('Webhook error:', err.message));
 }
 
-// ── Reply to Teams thread (Proactive messaging with webhook fallback)
+// ── Reply to Teams thread (Bot Framework REST with webhook fallback)
 async function replyToTeamsThread(session, message, senderName) {
   console.log('Sending visitor follow-up to Teams:', message);
 
@@ -420,23 +435,32 @@ async function replyToTeamsThread(session, message, senderName) {
     ],
   };
 
-  // Try proactive messaging using saved conversation reference
-  if (session.teams_conversation_ref && global.botAdapter) {
+  // Try Bot Framework REST API using saved conversation reference
+  if (session.teams_conversation_ref && session.teams_activity_id) {
     try {
-      const conversationReference = JSON.parse(session.teams_conversation_ref);
-      await global.botAdapter.continueConversation(conversationReference, async (context) => {
-        await context.sendActivity({
+      const ref = JSON.parse(session.teams_conversation_ref);
+      console.log('Using Bot Framework REST with serviceUrl:', ref.serviceUrl);
+
+      const token = await getBotToken();
+
+      // Post as reply to the original thread message
+      const response = await axios.post(
+        `${ref.serviceUrl}v3/conversations/${encodeURIComponent(ref.conversationId)}/activities`,
+        {
           type: 'message',
           attachments: [{
             contentType: 'application/vnd.microsoft.card.adaptive',
             content: adaptiveCard,
           }],
-        });
-      });
-      console.log('Visitor follow-up sent via proactive messaging ✅');
+        },
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+      );
+
+      console.log('Visitor follow-up sent via Bot Framework REST ✅');
       return;
+
     } catch (err) {
-      console.error('Proactive messaging error:', err.message);
+      console.error('Bot Framework REST error:', err.response?.data || err.message);
       console.log('Falling back to webhook...');
     }
   }
@@ -445,7 +469,6 @@ async function replyToTeamsThread(session, message, senderName) {
   if (!process.env.TEAMS_WEBHOOK_URL) return;
   const card = {
     type: 'message',
-     replyToId: session.teams_thread_id,
     attachments: [{
       contentType: 'application/vnd.microsoft.card.adaptive',
       content: {
