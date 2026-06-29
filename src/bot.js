@@ -139,7 +139,7 @@ class GoChatBot extends ActivityHandler {
 
         // Check for duplicate within 5 seconds
         const existing = await pool.query(
-          `SELECT id FROM messages WHERE session_id=$1 AND sender_name=$2 AND content=$3 AND created_at > NOW() - INTERVAL '5 seconds'`,
+          `SELECT id FROM messages WHERE session_id=$1 AND sender_name=$2 AND content=$3 AND created_at > NOW() - INTERVAL '30 seconds'`,
           [sessionId, from, messageContent]
         );
 
