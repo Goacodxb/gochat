@@ -147,10 +147,20 @@ if (sessionByThread.rows.length === 0) {
         const conversationReference = JSON.stringify(TurnContext.getConversationReference(context.activity));
 
         // Save base conversationId for lookup + messageId for thread replies
-        await pool.query(
-          `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2, teams_activity_id = $3 WHERE id = $4`,
-          [teamsConversationId, conversationReference, messageId, sessionId]
-        );
+        if (session.rows[0].status === 'waiting') {
+  // First reply — save everything including activity ID
+  await pool.query(
+    `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2, teams_activity_id = $3 WHERE id = $4`,
+    [teamsConversationId, JSON.stringify(conversationRef), messageId, sessionId]
+  );
+} else {
+  // Subsequent replies — only update conversation ref, NOT activity ID
+  await pool.query(
+    `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2 WHERE id = $3`,
+    [teamsConversationId, JSON.stringify(conversationRef), sessionId]
+  );
+}
+console.log('Saved conversation ID:', teamsConversationId, 'messageId:', messageId);
         console.log('Saved conversation ID:', teamsConversationId, 'messageId:', messageId);
 
         // Check for duplicate within 5 seconds
