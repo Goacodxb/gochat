@@ -436,20 +436,25 @@ async function replyToTeamsThread(session, message, senderName) {
     ],
   };
 
-  if (session.teams_conversation_ref && global.botAdapter) {
+  if (session.teams_conversation_ref) {
     try {
       const ref = JSON.parse(session.teams_conversation_ref);
       const serviceUrl = ref.serviceUrl;
       const fullConversationId = ref.conversation?.id || session.teams_thread_id;
       const conversationId = fullConversationId.split(';messageid=')[0];
+      const activityId = session.teams_activity_id;
 
-      console.log('Using Bot Framework REST conversationId:', conversationId);
+      console.log('Using Bot Framework REST conversationId:', conversationId, 'activityId:', activityId);
 
       const token = await getBotToken();
 
-      const activityId = session.teams_activity_id;
-await axios.post(
-  `${serviceUrl}v3/conversations/${encodeURIComponent(conversationId)}/activities/${activityId}`,
+      // Post as reply to the original thread message
+      const url = activityId
+        ? `${serviceUrl}v3/conversations/${encodeURIComponent(conversationId)}/activities/${activityId}`
+        : `${serviceUrl}v3/conversations/${encodeURIComponent(conversationId)}/activities`;
+
+      await axios.post(
+        url,
         {
           type: 'message',
           attachments: [{
