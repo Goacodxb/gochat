@@ -438,24 +438,32 @@ async function replyToTeamsThread(session, message, senderName) {
 
   if (session.teams_conversation_ref && global.botAdapter) {
     try {
-      const conversationRef = JSON.parse(session.teams_conversation_ref);
-      console.log('Using exact conversation reference, serviceUrl:', conversationRef.serviceUrl);
+      const ref = JSON.parse(session.teams_conversation_ref);
+      const serviceUrl = ref.serviceUrl;
+      const fullConversationId = ref.conversation?.id || session.teams_thread_id;
+      const conversationId = fullConversationId.split(';messageid=')[0];
 
-      await global.botAdapter.continueConversation(conversationRef, async (context) => {
-        await context.sendActivity({
+      console.log('Using Bot Framework REST conversationId:', conversationId);
+
+      const token = await getBotToken();
+
+      await axios.post(
+        `${serviceUrl}v3/conversations/${encodeURIComponent(conversationId)}/activities`,
+        {
           type: 'message',
           attachments: [{
             contentType: 'application/vnd.microsoft.card.adaptive',
             content: adaptiveCard,
           }],
-        });
-      });
+        },
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+      );
 
-      console.log('Visitor follow-up sent via continueConversation ✅');
+      console.log('Visitor follow-up sent via Bot Framework REST ✅');
       return;
 
     } catch (err) {
-      console.error('continueConversation error:', err.message);
+      console.error('Bot Framework REST error:', err.response?.data || err.message);
       console.log('Falling back to webhook...');
     }
   }
