@@ -60,16 +60,20 @@ class GoChatBot extends ActivityHandler {
       // Try to find session ID from message first
       let sessionId = extractSessionId(text);
 
-      // First try by messageId (most accurate for multiple visitors)
+      // Try by messageId range — find session whose thread started closest to this message
       if (!sessionId && messageId) {
         const sessionByMessage = await pool.query(
-          `SELECT id, claimed_by FROM sessions WHERE teams_activity_id = $1 AND status != 'closed' LIMIT 1`,
+          `SELECT id, claimed_by FROM sessions 
+           WHERE teams_activity_id IS NOT NULL 
+           AND status != 'closed'
+           AND CAST(teams_activity_id AS BIGINT) <= $1
+           ORDER BY CAST(teams_activity_id AS BIGINT) DESC LIMIT 1`,
           [messageId]
         ).catch(() => ({ rows: [] }));
 
         if (sessionByMessage.rows.length > 0) {
           sessionId = sessionByMessage.rows[0].id;
-          console.log('Found session by messageId:', sessionId);
+          console.log('Found session by messageId range:', sessionId);
         }
       }
 
@@ -142,7 +146,6 @@ class GoChatBot extends ActivityHandler {
 
         // Save EXACT conversation reference from TurnContext
         const conversationRef = TurnContext.getConversationReference(context.activity);
-        console.log('Saving exact conversation ref serviceUrl:', conversationRef.serviceUrl);
 
         if (session.rows[0].status === 'waiting') {
           // First reply — save everything including activity ID
