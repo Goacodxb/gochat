@@ -449,9 +449,11 @@ async function replyToTeamsThread(session, message, senderName) {
       const token = await getBotToken();
 
       // Post as reply to the original thread message
-      const url = activityId
-        ? `${serviceUrl}v3/conversations/${encodeURIComponent(conversationId)}/activities/${activityId}`
-        : `${serviceUrl}v3/conversations/${encodeURIComponent(conversationId)}/activities`;
+      const threadConversationId = activityId
+  ? `${conversationId};messageid=${activityId}`
+  : conversationId;
+
+const url = `${serviceUrl}v3/conversations/${encodeURIComponent(threadConversationId)}/activities`;
 
       await axios.post(
         url,
