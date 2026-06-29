@@ -424,7 +424,7 @@ async function replyToTeamsThread(session, message, senderName) {
     try {
       const ref = JSON.parse(session.teams_conversation_ref);
       const serviceUrl = ref.serviceUrl;
-      const conversationId = ref.conversationId || session.teams_thread_id;
+      const conversationId = ref.conversation?.id || ref.conversationId || session.teams_thread_id;
 
       console.log('Using Bot Framework REST with serviceUrl:', serviceUrl);
       console.log('Full ref:', JSON.stringify(ref));
