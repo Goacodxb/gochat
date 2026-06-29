@@ -62,10 +62,26 @@ class GoChatBot extends ActivityHandler {
 
       // If no session ID in message, look up by base Teams conversation ID
       if (!sessionId && teamsConversationId) {
+      
         const sessionByThread = await pool.query(
-          `SELECT id, claimed_by FROM sessions WHERE teams_thread_id = $1 AND status != 'closed' ORDER BY created_at DESC LIMIT 1`,
-          [teamsConversationId]
-        ).catch(() => ({ rows: [] }));
+  `SELECT id, claimed_by FROM sessions WHERE teams_activity_id = $1 AND status != 'closed' ORDER BY created_at DESC LIMIT 1`,
+  [messageId]
+).catch(() => ({ rows: [] }));
+
+// Fallback to conversation ID if not found by messageId
+if (sessionByThread.rows.length === 0) {
+  const sessionByConv = await pool.query(
+    `SELECT id, claimed_by FROM sessions WHERE teams_thread_id = $1 AND status != 'closed' ORDER BY created_at DESC LIMIT 1`,
+    [teamsConversationId]
+  ).catch(() => ({ rows: [] }));
+  if (sessionByConv.rows.length > 0) {
+    sessionId = sessionByConv.rows[0].id;
+    console.log('Found session by conversation ID:', sessionId);
+  }
+} else {
+  sessionId = sessionByThread.rows[0].id;
+  console.log('Found session by messageId:', sessionId);
+}
 
         if (sessionByThread.rows.length > 0) {
           sessionId = sessionByThread.rows[0].id;
