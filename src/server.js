@@ -172,15 +172,12 @@ app.post('/api/teams/claim', async (req, res) => {
   }
 });
 
-// ── POST /api/teams/thread — save Teams message ID for threading
+// ── POST /api/teams/thread
 app.post('/api/teams/thread', async (req, res) => {
   const { sessionId, messageId } = req.body;
   if (!sessionId || !messageId) return res.status(400).json({ error: 'Missing data' });
   try {
-    await pool.query(
-      'UPDATE sessions SET teams_thread_id = $1 WHERE id = $2',
-      [messageId, sessionId]
-    );
+    await pool.query('UPDATE sessions SET teams_thread_id = $1 WHERE id = $2', [messageId, sessionId]);
     console.log('Saved Teams thread ID:', messageId, 'for session:', sessionId);
     res.json({ ok: true });
   } catch (err) {
@@ -303,6 +300,21 @@ app.post('/api/messages', async (req, res) => {
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
+// ── Bot Framework token (uses botframework.com — bypasses Conditional Access!)
+async function getBotToken() {
+  const response = await axios.post(
+    'https://login.microsoftonline.com/botframework.com/oauth2/v2.0/token',
+    new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: process.env.TEAMS_APP_ID,
+      client_secret: process.env.TEAMS_APP_PASSWORD,
+      scope: 'https://api.botframework.com/.default',
+    }),
+    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+  );
+  return response.data.access_token;
+}
+
 // ── Graph API token
 async function getGraphToken() {
   const response = await axios.post(
@@ -323,16 +335,11 @@ async function postToTeams(sessionId, name, email, message) {
   const teamId = process.env.TEAMS_TEAM_ID;
   const channelId = process.env.TEAMS_CHANNEL_ID;
 
-  // Try Graph API first
   if (teamId && channelId) {
     try {
       const token = await getGraphToken();
-
       const body = {
-        body: {
-          contentType: 'html',
-          content: `<attachment id="1"></attachment>`,
-        },
+        body: { contentType: 'html', content: `<attachment id="1"></attachment>` },
         attachments: [{
           id: '1',
           contentType: 'application/vnd.microsoft.card.adaptive',
@@ -353,31 +360,23 @@ async function postToTeams(sessionId, name, email, message) {
           }),
         }],
       };
-
       const response = await axios.post(
         `https://graph.microsoft.com/v1.0/teams/${teamId}/channels/${channelId}/messages`,
         body,
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );
-
       const teamsMessageId = response.data.id;
       if (teamsMessageId) {
-        await pool.query(
-          'UPDATE sessions SET teams_thread_id = $1 WHERE id = $2',
-          [teamsMessageId, sessionId]
-        );
+        await pool.query('UPDATE sessions SET teams_thread_id = $1 WHERE id = $2', [teamsMessageId, sessionId]);
         console.log('Posted to Teams via Graph API ✅ messageId:', teamsMessageId);
       }
       return;
-
     } catch (err) {
       console.error('Graph API error:', JSON.stringify(err.response?.data) || err.message);
-      console.error('Graph API status:', err.response?.status);
       console.log('Falling back to webhook...');
     }
   }
 
-  // Fallback to webhook
   if (!process.env.TEAMS_WEBHOOK_URL) return;
   const card = {
     type: 'message',
@@ -405,7 +404,7 @@ async function postToTeams(sessionId, name, email, message) {
     .catch(err => console.error('Webhook error:', err.message));
 }
 
-// ── Reply to Teams thread (Proactive messaging with webhook fallback)
+// ── Reply to Teams thread (Bot Framework REST with webhook fallback)
 async function replyToTeamsThread(session, message, senderName) {
   console.log('Sending visitor follow-up to Teams:', message);
 
@@ -420,23 +419,34 @@ async function replyToTeamsThread(session, message, senderName) {
     ],
   };
 
-  // Try proactive messaging using saved conversation reference
-  if (session.teams_conversation_ref && global.botAdapter) {
+  // Try Bot Framework REST using saved conversation reference
+  if (session.teams_conversation_ref) {
     try {
-      const conversationReference = JSON.parse(session.teams_conversation_ref);
-      await global.botAdapter.continueConversation(conversationReference, async (context) => {
-        await context.sendActivity({
+      const ref = JSON.parse(session.teams_conversation_ref);
+      const serviceUrl = ref.serviceUrl;
+      const conversationId = ref.conversationId || session.teams_thread_id;
+
+      console.log('Using Bot Framework REST with serviceUrl:', serviceUrl);
+
+      const token = await getBotToken();
+
+      await axios.post(
+        `${serviceUrl}v3/conversations/${encodeURIComponent(conversationId)}/activities`,
+        {
           type: 'message',
           attachments: [{
             contentType: 'application/vnd.microsoft.card.adaptive',
             content: adaptiveCard,
           }],
-        });
-      });
-      console.log('Visitor follow-up sent via proactive messaging ✅');
+        },
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+      );
+
+      console.log('Visitor follow-up sent via Bot Framework REST ✅');
       return;
+
     } catch (err) {
-      console.error('Proactive messaging error:', err.message);
+      console.error('Bot Framework REST error:', err.response?.data || err.message);
       console.log('Falling back to webhook...');
     }
   }
@@ -445,7 +455,6 @@ async function replyToTeamsThread(session, message, senderName) {
   if (!process.env.TEAMS_WEBHOOK_URL) return;
   const card = {
     type: 'message',
-     replyToId: session.teams_thread_id,
     attachments: [{
       contentType: 'application/vnd.microsoft.card.adaptive',
       content: {
@@ -464,7 +473,6 @@ async function replyToTeamsThread(session, message, senderName) {
     .then(() => console.log('Visitor follow-up sent via webhook ✅'))
     .catch(err => console.error('Webhook error:', err.message));
 }
-
 
 function extractSessionFromText(text) {
   const match = text.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
