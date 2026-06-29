@@ -427,8 +427,11 @@ async function replyToTeamsThread(session, message, senderName) {
       const conversationId = ref.conversationId || session.teams_thread_id;
 
       console.log('Using Bot Framework REST with serviceUrl:', serviceUrl);
+      console.log('Full ref:', JSON.stringify(ref));
+console.log('conversationId:', conversationId);
 
       const token = await getBotToken();
+      console.log('Got bot token successfully');
 
       await axios.post(
         `${serviceUrl}v3/conversations/${encodeURIComponent(conversationId)}/activities`,
