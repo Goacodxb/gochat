@@ -303,7 +303,7 @@ app.get('/health', (req, res) => res.json({ ok: true }));
 // ── Bot Framework token (uses botframework.com — bypasses Conditional Access!)
 async function getBotToken() {
   const response = await axios.post(
-'https://login.microsoftonline.com/67b4ecd2-df5b-4b66-8d2b-1203e33c7302/oauth2/v2.0/token',
+    'https://login.microsoftonline.com/botframework.com/oauth2/v2.0/token',
     new URLSearchParams({
       grant_type: 'client_credentials',
       client_id: process.env.TEAMS_APP_ID,
@@ -330,49 +330,66 @@ async function getGraphToken() {
   return response.data.access_token;
 }
 
-// ── Post to Teams (Graph API with webhook fallback)
+// ── Post to Teams (Bot Framework REST with webhook fallback)
 async function postToTeams(sessionId, name, email, message) {
-  const teamId = process.env.TEAMS_TEAM_ID;
+  const serviceUrl = process.env.TEAMS_SERVICE_URL || 'https://smba.trafficmanager.net/uk/67b4ecd2-df5b-4b66-8d2b-1203e33c7302/';
   const channelId = process.env.TEAMS_CHANNEL_ID;
 
-  if (teamId && channelId) {
+  if (channelId) {
     try {
-      const token = await getGraphToken();
-      const body = {
-        body: { contentType: 'html', content: `<attachment id="1"></attachment>` },
-        attachments: [{
-          id: '1',
-          contentType: 'application/vnd.microsoft.card.adaptive',
-          content: JSON.stringify({
-            $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
-            type: 'AdaptiveCard',
-            version: '1.4',
-            body: [
-              { type: 'TextBlock', text: '💬 New chat from website visitor', weight: 'Bolder', size: 'Medium', color: 'Accent' },
-              { type: 'FactSet', facts: [
-                { title: 'Name', value: name },
-                { title: 'Email', value: email },
-                { title: 'Session ID', value: sessionId },
-              ]},
-              { type: 'TextBlock', text: `"${message}"`, wrap: true, isSubtle: true },
-              { type: 'TextBlock', text: `To reply: @GoChat ${sessionId} <your message>`, wrap: true, color: 'Accent', size: 'Small' },
-            ],
-          }),
-        }],
-      };
-      const response = await axios.post(
-        `https://graph.microsoft.com/v1.0/teams/${teamId}/channels/${channelId}/messages`,
-        body,
+      const token = await getBotToken();
+
+      const createConvResponse = await axios.post(
+        `${serviceUrl}v3/conversations`,
+        {
+          isGroup: true,
+          channelData: { channel: { id: channelId } },
+          activity: {
+            type: 'message',
+            attachments: [{
+              contentType: 'application/vnd.microsoft.card.adaptive',
+              content: {
+                $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+                type: 'AdaptiveCard',
+                version: '1.4',
+                body: [
+                  { type: 'TextBlock', text: '💬 New chat from website visitor', weight: 'Bolder', size: 'Medium', color: 'Accent' },
+                  { type: 'FactSet', facts: [
+                    { title: 'Name', value: name },
+                    { title: 'Email', value: email },
+                    { title: 'Session ID', value: sessionId },
+                  ]},
+                  { type: 'TextBlock', text: `"${message}"`, wrap: true, isSubtle: true },
+                  { type: 'TextBlock', text: `To reply: @GoChat ${sessionId} <your message>`, wrap: true, color: 'Accent', size: 'Small' },
+                ],
+              },
+            }],
+          },
+          bot: { id: `28:${process.env.TEAMS_APP_ID}`, name: 'gochat-bot' },
+        },
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );
-      const teamsMessageId = response.data.id;
-      if (teamsMessageId) {
-        await pool.query('UPDATE sessions SET teams_thread_id = $1 WHERE id = $2', [teamsMessageId, sessionId]);
-        console.log('Posted to Teams via Graph API ✅ messageId:', teamsMessageId);
-      }
+
+      const conversationId = createConvResponse.data.id;
+      const activityId = createConvResponse.data.activityId;
+
+      console.log('Posted to Teams via Bot Framework ✅ conversationId:', conversationId);
+
+      const conversationRef = {
+        conversationId: conversationId,
+        activityId: activityId,
+        serviceUrl: serviceUrl,
+        botId: `28:${process.env.TEAMS_APP_ID}`,
+      };
+
+      await pool.query(
+        'UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2, teams_activity_id = $3 WHERE id = $4',
+        [conversationId, JSON.stringify(conversationRef), activityId, sessionId]
+      );
       return;
+
     } catch (err) {
-      console.error('Graph API error:', JSON.stringify(err.response?.data) || err.message);
+      console.error('Bot Framework postToTeams error:', err.response?.data || err.message);
       console.log('Falling back to webhook...');
     }
   }
@@ -419,19 +436,18 @@ async function replyToTeamsThread(session, message, senderName) {
     ],
   };
 
-  // Try Bot Framework REST using saved conversation reference
   if (session.teams_conversation_ref) {
     try {
       const ref = JSON.parse(session.teams_conversation_ref);
       const serviceUrl = ref.serviceUrl;
-      const conversationId = ref.conversation?.id || ref.conversationId || session.teams_thread_id;
 
-      console.log('Using Bot Framework REST with serviceUrl:', serviceUrl);
-      console.log('Full ref:', JSON.stringify(ref));
-console.log('conversationId:', conversationId);
+      // Use base conversationId WITHOUT messageid suffix
+      const fullConversationId = ref.conversationId || session.teams_thread_id;
+      const conversationId = fullConversationId.split(';messageid=')[0];
+
+      console.log('Using Bot Framework REST conversationId:', conversationId);
 
       const token = await getBotToken();
-      console.log('Got bot token successfully');
 
       await axios.post(
         `${serviceUrl}v3/conversations/${encodeURIComponent(conversationId)}/activities`,
@@ -454,7 +470,6 @@ console.log('conversationId:', conversationId);
     }
   }
 
-  // Fallback to webhook
   if (!process.env.TEAMS_WEBHOOK_URL) return;
   const card = {
     type: 'message',
