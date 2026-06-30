@@ -126,8 +126,6 @@ class GoChatBot extends ActivityHandler {
           return;
         }
 
-        let justClaimed = false;
-
         // Claim if waiting
         if (session.rows[0].status === 'waiting') {
           await pool.query(
@@ -136,16 +134,12 @@ class GoChatBot extends ActivityHandler {
           );
           broadcastToSession(sessionId, { type: 'agent_joined', agentName: from });
           console.log('Session claimed by:', from);
-          justClaimed = true;
         }
-        // If already claimed by another agent — notify and ignore
+        // If already claimed by another agent — ignore
         else if (session.rows[0].status === 'active' &&
                  session.rows[0].claimed_by &&
                  session.rows[0].claimed_by !== from) {
           console.log('Session already claimed by:', session.rows[0].claimed_by, '— ignoring:', from);
-          await context.sendActivity(
-            `⚠️ This chat is already being handled by **${session.rows[0].claimed_by}**. Your message was not sent to the visitor.`
-          );
           await next();
           return;
         }
@@ -167,42 +161,6 @@ class GoChatBot extends ActivityHandler {
             [teamsConversationId, JSON.stringify(conversationRef), sessionId]
           );
           console.log('Updated conversation ref — keeping original teams_activity_id');
-        }
-
-        // ── ISOLATED, FAIL-SAFE: visually update the original card to show "Claimed by"
-        // This is wrapped in its own try/catch so it can NEVER break claiming or messaging below.
-        if (justClaimed) {
-          try {
-            const originalActivityId = session.rows[0].teams_activity_id || messageId;
-            const updatedCard = {
-              $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
-              type: 'AdaptiveCard',
-              version: '1.4',
-              body: [
-                { type: 'TextBlock', text: '💬 New chat from website visitor', weight: 'Bolder', size: 'Medium', color: 'Accent' },
-                { type: 'FactSet', facts: [
-                  { title: 'Name', value: session.rows[0].visitor_name },
-                  { title: 'Email', value: session.rows[0].visitor_email },
-                ]},
-                { type: 'TextBlock', text: `✅ Claimed by ${from}`, weight: 'Bolder', color: 'Good' },
-              ],
-            };
-
-            await this.adapter.continueConversation(conversationRef, async (updateContext) => {
-              await updateContext.updateActivity({
-                type: 'message',
-                id: originalActivityId,
-                attachments: [{
-                  contentType: 'application/vnd.microsoft.card.adaptive',
-                  content: updatedCard,
-                }],
-              });
-            });
-            console.log('Card visually updated to show claimed status ✅');
-          } catch (cardErr) {
-            // Never let this break the main flow — just log it
-            console.error('Card update failed (non-critical):', cardErr.message);
-          }
         }
 
         // Check for duplicate within 5 seconds
