@@ -136,10 +136,14 @@ class GoChatBot extends ActivityHandler {
           console.log('Session claimed by:', from);
         }
         // If already claimed by another agent — ignore
+    // If already claimed by another agent — notify and ignore
         else if (session.rows[0].status === 'active' &&
                  session.rows[0].claimed_by &&
                  session.rows[0].claimed_by !== from) {
           console.log('Session already claimed by:', session.rows[0].claimed_by, '— ignoring:', from);
+          await context.sendActivity(
+            `🚫 You cannot reply to this chat.\nThis conversation was claimed by **${session.rows[0].claimed_by}**.\nPlease look for unclaimed chats to assist visitors.`
+          );
           await next();
           return;
         }
