@@ -19,6 +19,25 @@ class GoChatBot extends ActivityHandler {
         return;
       }
 
+      // Deduplicate — ignore if same activity ID processed recently
+      const activityId = context.activity.id;
+      if (global.processedActivities?.has(activityId)) {
+        console.log('Duplicate activity ignored:', activityId);
+        await next();
+        return;
+      }
+      if (!global.processedActivities) global.processedActivities = new Map();
+      global.processedActivities.set(activityId, Date.now());
+      // Clean up old entries
+      if (global.processedActivities.size > 100) {
+        const cutoff = Date.now() - 60000;
+        for (const [key, time] of global.processedActivities) {
+          if (time < cutoff) global.processedActivities.delete(key);
+        }
+      }
+
+      const from = context.activity.from?.name || 'Agent';
+
       // Clean text - remove @mention tags
       let text = (context.activity.text || '');
       text = text.replace(/<at>[^<]*<\/at>/gi, '').trim();
@@ -28,8 +47,6 @@ class GoChatBot extends ActivityHandler {
         await next();
         return;
       }
-
-      const from = context.activity.from?.name || 'Agent';
 
       // Remove messageid suffix from conversation ID for lookup
       const rawConversationId = context.activity.conversation?.id || '';
@@ -68,6 +85,7 @@ class GoChatBot extends ActivityHandler {
            WHERE teams_activity_id IS NOT NULL 
            AND status != 'closed'
            AND CAST(teams_activity_id AS BIGINT) <= $1
+           AND created_at > NOW() - INTERVAL '24 hours'
            ORDER BY CAST(teams_activity_id AS BIGINT) DESC LIMIT 1`,
           [messageId]
         ).catch(() => ({ rows: [] }));
@@ -81,7 +99,11 @@ class GoChatBot extends ActivityHandler {
       // Fallback — look up by base Teams conversation ID
       if (!sessionId && teamsConversationId) {
         const sessionByThread = await pool.query(
-          `SELECT id, claimed_by FROM sessions WHERE teams_thread_id = $1 AND status != 'closed' ORDER BY created_at DESC LIMIT 1`,
+          `SELECT id, claimed_by FROM sessions 
+           WHERE teams_thread_id = $1 
+           AND status != 'closed' 
+           AND created_at > NOW() - INTERVAL '24 hours'
+           ORDER BY created_at DESC LIMIT 1`,
           [teamsConversationId]
         ).catch(() => ({ rows: [] }));
 
