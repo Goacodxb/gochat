@@ -54,6 +54,13 @@
     #gc-header h3 { font-size: 14px; font-weight: 600; margin: 0; }
     #gc-header-status { font-size: 11px; margin: 3px 0 0; display: flex; align-items: center; gap: 4px; }
     #gc-status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+    #gc-header-actions { display: flex; align-items: center; gap: 8px; }
+    #gc-end-chat-btn {
+      background: #dc2626; border: none; color: white;
+      font-size: 11px; cursor: pointer; padding: 4px 8px;
+      border-radius: 4px; font-weight: 600; display: none;
+    }
+    #gc-end-chat-btn:hover { background: #b91c1c; }
     #gc-close {
       background: none; border: none; color: #94a3b8;
       font-size: 20px; cursor: pointer; padding: 0; line-height: 1;
@@ -103,6 +110,11 @@
     .gc-msg.system { background: #eff6ff; color: #1e40af; align-self: center; font-size: 12px; border-radius: 20px; padding: 6px 14px; max-width: 90%; text-align: center; }
     .gc-msg .gc-sender { font-size: 10px; opacity: 0.7; margin-bottom: 3px; }
     #gc-chat-status { font-size: 12px; color: #6b7280; text-align: center; padding: 6px 0; font-style: italic; }
+    #gc-abuse-error {
+      display: none; background: #fef2f2; border: 1px solid #fecaca;
+      border-radius: 6px; padding: 8px 12px; margin-top: 4px;
+      font-size: 12px; color: #dc2626; text-align: center;
+    }
     #gc-waiting-box {
       display: none; background: #f8fafc; border: 1px dashed #cbd5e1;
       border-radius: 8px; padding: 16px; text-align: center; margin-top: 8px;
@@ -121,19 +133,26 @@
     #gc-ended-box p { font-size: 13px; color: #065f46; margin: 0; }
     #gc-chat-input {
       display: none; gap: 8px; padding: 10px 16px 14px;
-      border-top: 1px solid #f3f4f6;
+      border-top: 1px solid #f3f4f6; flex-direction: column;
     }
     #gc-chat-input.active { display: flex; }
-    #gc-chat-input input {
+    #gc-chat-input-row { display: flex; gap: 8px; }
+    #gc-msg-input {
       flex: 1; padding: 9px 12px; border: 1px solid #e5e7eb;
       border-radius: 8px; font-size: 14px; font-family: inherit;
     }
-    #gc-chat-input input:focus { outline: none; border-color: #0f1d3a; }
+    #gc-msg-input:focus { outline: none; border-color: #0f1d3a; }
     #gc-chat-send {
       padding: 9px 14px; background: #0f1d3a; color: white;
       border: none; border-radius: 8px; cursor: pointer; font-size: 16px;
     }
     #gc-chat-send:hover { background: #1a2f5a; }
+    #gc-visitor-end-btn {
+      width: 100%; padding: 8px; background: none; border: 1px solid #e5e7eb;
+      border-radius: 8px; font-size: 12px; color: #6b7280;
+      cursor: pointer; margin-top: 2px;
+    }
+    #gc-visitor-end-btn:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
     #gc-offline-fields { display: flex; flex-direction: column; gap: 10px; }
     .gc-offline-input {
       width: 100%; padding: 9px 12px; border: 1px solid #e5e7eb;
@@ -182,7 +201,10 @@
           </div>
         </div>
       </div>
-      <button id="gc-close" aria-label="Close chat">×</button>
+      <div id="gc-header-actions">
+        <button id="gc-end-chat-btn" title="End chat">End Chat</button>
+        <button id="gc-close" aria-label="Close chat">×</button>
+      </div>
     </div>
     <div id="gc-body">
 
@@ -253,8 +275,12 @@
 
     <!-- Chat input — hidden until agent joins -->
     <div id="gc-chat-input">
-      <input id="gc-msg-input" type="text" placeholder="Type a message..." autocomplete="off">
-      <button id="gc-chat-send">➤</button>
+      <div id="gc-chat-input-row">
+        <input id="gc-msg-input" type="text" placeholder="Type a message..." autocomplete="off">
+        <button id="gc-chat-send">➤</button>
+      </div>
+      <div id="gc-abuse-error">⚠️ Your message contains inappropriate content. Please keep the conversation respectful.</div>
+      <button id="gc-visitor-end-btn">End conversation</button>
     </div>
   `;
 
@@ -278,6 +304,31 @@
     widget.classList.remove('open');
     launcher.innerHTML = '💬';
   });
+
+  // ── End chat (from header button) ──────────────────────
+  document.getElementById('gc-end-chat-btn').addEventListener('click', function () {
+    if (!sessionId) return;
+    if (!confirm('Are you sure you want to end this chat?')) return;
+    endChat();
+  });
+
+  // ── End chat (from visitor button) ─────────────────────
+  document.getElementById('gc-visitor-end-btn').addEventListener('click', function () {
+    if (!sessionId) return;
+    if (!confirm('Are you sure you want to end this chat?')) return;
+    endChat();
+  });
+
+  function endChat() {
+    fetch(BACKEND_URL + '/api/sessions/' + sessionId + '/end', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    .then(function () {
+      onSessionClosed();
+    })
+    .catch(console.error);
+  }
 
   // ── Availability ───────────────────────────────────────
   function checkAvailability() {
@@ -354,7 +405,7 @@
         if (!d.sessionId) throw new Error('No session ID returned');
         sessionId = d.sessionId;
         showChatView(name, msg);
-        connectWebSocket(); // polling starts automatically if WebSocket fails
+        connectWebSocket();
       })
       .catch(function () {
         btn.disabled = false;
@@ -364,13 +415,12 @@
       });
   });
 
-  // ── Show chat view — waiting for agent ─────────────────
+  // ── Show chat view ─────────────────────────────────────
   function showChatView(name, firstMsg) {
     document.getElementById('gc-prechat').style.display = 'none';
     document.getElementById('gc-chat').style.display = '';
     addMessage('visitor', name, firstMsg);
     document.getElementById('gc-waiting-box').style.display = 'block';
-    // Input stays hidden until agent joins
   }
 
   // ── Agent joined ───────────────────────────────────────
@@ -382,6 +432,7 @@
     document.getElementById('gc-status-dot').style.background = '#22c55e';
     document.getElementById('gc-status-text').textContent = 'Connected with ' + agentName;
     document.getElementById('gc-chat-input').classList.add('active');
+    document.getElementById('gc-end-chat-btn').style.display = 'block';
     document.getElementById('gc-msg-input').focus();
   }
 
@@ -390,6 +441,7 @@
     document.getElementById('gc-chat-input').classList.remove('active');
     document.getElementById('gc-waiting-box').style.display = 'none';
     document.getElementById('gc-ended-box').style.display = 'block';
+    document.getElementById('gc-end-chat-btn').style.display = 'none';
     document.getElementById('gc-status-dot').style.background = '#94a3b8';
     document.getElementById('gc-status-text').textContent = 'Chat ended';
     stopMessagePolling();
@@ -399,14 +451,32 @@
   function sendMessage() {
     var input = document.getElementById('gc-msg-input');
     var content = input.value.trim();
+    var abuseEl = document.getElementById('gc-abuse-error');
     if (!content || !sessionId) return;
+
+    abuseEl.style.display = 'none';
     input.value = '';
-    addMessage('visitor', visitorName, content);
+
     fetch(BACKEND_URL + '/api/sessions/' + sessionId + '/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: content, senderName: visitorName }),
-    }).catch(console.error);
+    })
+    .then(function(r) {
+      if (!r.ok) {
+        return r.json().then(function(d) {
+          // Show abuse error if content is inappropriate
+          if (r.status === 400 && d.error && d.error.includes('inappropriate')) {
+            abuseEl.style.display = 'block';
+            // Put message back in input
+            input.value = content;
+          }
+        });
+      }
+      // Message sent successfully — add to chat
+      addMessage('visitor', visitorName, content);
+    })
+    .catch(console.error);
   }
 
   document.getElementById('gc-chat-send').addEventListener('click', sendMessage);
@@ -439,6 +509,8 @@
           onAgentJoined(data.agentName || 'Agent');
         } else if (data.type === 'session_closed') {
           onSessionClosed();
+        } else if (data.type === 'visitor_message') {
+          // Already shown optimistically — skip
         }
       } catch (err) { console.error(err); }
     };
@@ -446,7 +518,7 @@
     ws.onclose = function () { wsConnected = false; startMessagePolling(); };
   }
 
-  // ── Long-poll fallback (only when WebSocket fails) ────────────────────────────────
+  // ── Long-poll fallback ─────────────────────────────────
   function startMessagePolling() {
     if (messagePoller || wsConnected) return;
     messagePoller = setInterval(function () {
