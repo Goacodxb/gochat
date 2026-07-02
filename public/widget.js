@@ -152,7 +152,9 @@
       border-radius: 8px; font-size: 12px; color: #6b7280;
       cursor: pointer; margin-top: 2px;
     }
-    #gc-visitor-end-btn:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+    #gc-visitor-end-btn:hover {background: #dc2626;
+    color: #ffffff;
+    border-color: #fecaca; }
     #gc-offline-fields { display: flex; flex-direction: column; gap: 10px; }
     .gc-offline-input {
       width: 100%; padding: 9px 12px; border: 1px solid #e5e7eb;
