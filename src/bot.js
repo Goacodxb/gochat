@@ -1,5 +1,6 @@
 const { ActivityHandler, TurnContext } = require('botbuilder');
 const { Pool } = require('pg');
+const axios = require('axios');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -23,7 +24,7 @@ class GoChatBot extends ActivityHandler {
       text = text.replace(/<at>[^<]*<\/at>/gi, '').trim();
 
       // Ignore empty or bot confirmation messages
-      if (!text || text.startsWith('✅') || text.startsWith('❌') || text.startsWith('⚠️') || text.startsWith('👋') || text.startsWith('💬')) {
+      if (!text || text.startsWith('✅') || text.startsWith('❌') || text.startsWith('⚠️') || text.startsWith('👋') || text.startsWith('💬') || text.startsWith('🚫')) {
         await next();
         return;
       }
@@ -124,7 +125,6 @@ class GoChatBot extends ActivityHandler {
           console.log('Session not found or closed:', sessionId);
           // Notify agent that session is closed
           if (process.env.TEAMS_WEBHOOK_URL) {
-            const axios = require('axios');
             await axios.post(process.env.TEAMS_WEBHOOK_URL, {
               type: 'message',
               text: `❌ This chat session has already been closed. The visitor is no longer available.`
@@ -151,9 +151,7 @@ class GoChatBot extends ActivityHandler {
                  session.rows[0].claimed_by &&
                  session.rows[0].claimed_by !== from) {
           console.log('Session already claimed by:', session.rows[0].claimed_by, '— ignoring:', from);
-          // Notify agent via webhook (always works)
           if (process.env.TEAMS_WEBHOOK_URL) {
-            const axios = require('axios');
             await axios.post(process.env.TEAMS_WEBHOOK_URL, {
               type: 'message',
               text: `🚫 **${from}** — You cannot reply to this chat.\nThis conversation was claimed by **${session.rows[0].claimed_by}**.\nPlease look for unclaimed chats to assist visitors.`
@@ -182,8 +180,7 @@ class GoChatBot extends ActivityHandler {
           console.log('Updated conversation ref — keeping original teams_activity_id');
         }
 
-        // ── ISOLATED, FAIL-SAFE: visually update the original card to show "Claimed by"
-        // This is wrapped in its own try/catch so it can NEVER break claiming or messaging below.
+        // ── ISOLATED, FAIL-SAFE: visually update card to show "Claimed by"
         if (justClaimed) {
           try {
             const originalActivityId = session.rows[0].teams_activity_id || messageId;
@@ -213,7 +210,6 @@ class GoChatBot extends ActivityHandler {
             });
             console.log('Card visually updated to show claimed status ✅');
           } catch (cardErr) {
-            // Never let this break the main flow — just log it
             console.error('Card update failed (non-critical):', cardErr.message);
           }
         }
@@ -236,12 +232,14 @@ class GoChatBot extends ActivityHandler {
           [sessionId, from, messageContent]
         );
 
-        // Push to visitor
-        broadcastToSession(sessionId, {
-          type: 'agent_message',
-          content: messageContent,
-          senderName: from,
-        });
+        // Push to visitor only if session is still active
+        if (session.rows[0].status === 'active' || session.rows[0].status === 'waiting') {
+          broadcastToSession(sessionId, {
+            type: 'agent_message',
+            content: messageContent,
+            senderName: from,
+          });
+        }
 
         console.log('Reply sent to visitor:', messageContent);
 
