@@ -7,6 +7,44 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
+async function getBotToken() {
+  const response = await axios.post(
+    'https://login.microsoftonline.com/67b4ecd2-df5b-4b66-8d2b-1203e33c7302/oauth2/v2.0/token',
+    new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: process.env.TEAMS_APP_ID,
+      client_secret: process.env.TEAMS_APP_PASSWORD,
+      scope: 'https://api.botframework.com/.default',
+    }),
+    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+  );
+  return response.data.access_token;
+}
+
+async function postToThread(teamsConversationId, messageId, text) {
+  try {
+    const token = await getBotToken();
+    const serviceUrl = process.env.TEAMS_SERVICE_URL || 'https://smba.trafficmanager.net/uk/67b4ecd2-df5b-4b66-8d2b-1203e33c7302/';
+    const threadConvId = messageId
+      ? `${teamsConversationId};messageid=${messageId}`
+      : teamsConversationId;
+    await axios.post(
+      `${serviceUrl}v3/conversations/${encodeURIComponent(threadConvId)}/activities`,
+      { type: 'message', text },
+      { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+    );
+    console.log('Posted warning to thread ✅');
+  } catch (err) {
+    console.error('Thread warning error:', err.message);
+    // Fallback to webhook
+    if (process.env.TEAMS_WEBHOOK_URL) {
+      await axios.post(process.env.TEAMS_WEBHOOK_URL, {
+        type: 'message', text
+      }).catch(console.error);
+    }
+  }
+}
+
 class GoChatBot extends ActivityHandler {
   constructor(adapter) {
     super();
@@ -86,13 +124,12 @@ class GoChatBot extends ActivityHandler {
 
         if (exactSession.rows.length > 0) {
           if (exactSession.rows[0].status === 'closed') {
-            console.log('Session is closed — notifying agent');
-            if (process.env.TEAMS_WEBHOOK_URL) {
-              await axios.post(process.env.TEAMS_WEBHOOK_URL, {
-                type: 'message',
-                text: `❌ This chat session has already been closed. The visitor is no longer available.`
-              }).catch(err => console.error('Webhook notify error:', err.message));
-            }
+            console.log('Session is closed — notifying agent in thread');
+            await postToThread(
+              teamsConversationId,
+              messageId,
+              `❌ This chat session has already been closed. The visitor is no longer available.`
+            );
             await next();
             return;
           }
@@ -168,12 +205,11 @@ class GoChatBot extends ActivityHandler {
 
         if (!session.rows.length || session.rows[0].status === 'closed') {
           console.log('Session not found or closed:', sessionId);
-          if (process.env.TEAMS_WEBHOOK_URL) {
-            await axios.post(process.env.TEAMS_WEBHOOK_URL, {
-              type: 'message',
-              text: `❌ This chat session has already been closed. The visitor is no longer available.`
-            }).catch(err => console.error('Webhook notify error:', err.message));
-          }
+          await postToThread(
+            teamsConversationId,
+            messageId,
+            `❌ This chat session has already been closed. The visitor is no longer available.`
+          );
           await next();
           return;
         }
@@ -190,17 +226,16 @@ class GoChatBot extends ActivityHandler {
           console.log('Session claimed by:', from);
           justClaimed = true;
         }
-        // If already claimed by another agent — notify via webhook and ignore
+        // If already claimed by another agent — notify in thread and ignore
         else if (session.rows[0].status === 'active' &&
                  session.rows[0].claimed_by &&
                  session.rows[0].claimed_by !== from) {
           console.log('Session already claimed by:', session.rows[0].claimed_by, '— ignoring:', from);
-          if (process.env.TEAMS_WEBHOOK_URL) {
-            await axios.post(process.env.TEAMS_WEBHOOK_URL, {
-              type: 'message',
-              text: `🚫 **${from}** — You cannot reply to this chat.\nThis conversation was claimed by **${session.rows[0].claimed_by}**.\nPlease look for unclaimed chats to assist visitors.`
-            }).catch(err => console.error('Webhook notify error:', err.message));
-          }
+          await postToThread(
+            teamsConversationId,
+            messageId,
+            `🚫 **${from}** — You cannot reply to this chat.\nThis conversation was claimed by **${session.rows[0].claimed_by}**.\nPlease look for unclaimed chats to assist visitors.`
+          );
           await next();
           return;
         }
