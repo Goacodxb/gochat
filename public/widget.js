@@ -202,7 +202,6 @@
         </div>
       </div>
       <div id="gc-header-actions">
-        <button id="gc-end-chat-btn" title="End chat">End Chat</button>
         <button id="gc-close" aria-label="Close chat">×</button>
       </div>
     </div>
@@ -303,13 +302,6 @@
   document.getElementById('gc-close').addEventListener('click', function () {
     widget.classList.remove('open');
     launcher.innerHTML = '💬';
-  });
-
-  // ── End chat (from header button) ──────────────────────
-  document.getElementById('gc-end-chat-btn').addEventListener('click', function () {
-    if (!sessionId) return;
-    if (!confirm('Are you sure you want to end this chat?')) return;
-    endChat();
   });
 
   // ── End chat (from visitor button) ─────────────────────
@@ -432,7 +424,6 @@
     document.getElementById('gc-status-dot').style.background = '#22c55e';
     document.getElementById('gc-status-text').textContent = 'Connected with ' + agentName;
     document.getElementById('gc-chat-input').classList.add('active');
-    document.getElementById('gc-end-chat-btn').style.display = 'block';
     document.getElementById('gc-msg-input').focus();
   }
 
@@ -441,7 +432,6 @@
     document.getElementById('gc-chat-input').classList.remove('active');
     document.getElementById('gc-waiting-box').style.display = 'none';
     document.getElementById('gc-ended-box').style.display = 'block';
-    document.getElementById('gc-end-chat-btn').style.display = 'none';
     document.getElementById('gc-status-dot').style.background = '#94a3b8';
     document.getElementById('gc-status-text').textContent = 'Chat ended';
     stopMessagePolling();
