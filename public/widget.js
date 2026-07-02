@@ -13,6 +13,7 @@
   var ws = null;
   var isOnline = false;
   var agentJoined = false;
+  var sessionClosed = false;
 
   var style = document.createElement('style');
   style.textContent = `
@@ -152,9 +153,7 @@
       border-radius: 8px; font-size: 12px; color: #6b7280;
       cursor: pointer; margin-top: 2px;
     }
-    #gc-visitor-end-btn:hover {background: #dc2626;
-    color: #ffffff;
-    border-color: #fecaca; }
+    #gc-visitor-end-btn:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
     #gc-offline-fields { display: flex; flex-direction: column; gap: 10px; }
     .gc-offline-input {
       width: 100%; padding: 9px 12px; border: 1px solid #e5e7eb;
@@ -431,6 +430,7 @@
 
   // ── Session closed ─────────────────────────────────────
   function onSessionClosed() {
+    sessionClosed = true;
     document.getElementById('gc-chat-input').classList.remove('active');
     document.getElementById('gc-waiting-box').style.display = 'none';
     document.getElementById('gc-ended-box').style.display = 'block';
@@ -444,7 +444,7 @@
     var input = document.getElementById('gc-msg-input');
     var content = input.value.trim();
     var abuseEl = document.getElementById('gc-abuse-error');
-    if (!content || !sessionId) return;
+    if (!content || !sessionId || sessionClosed) return;
 
     abuseEl.style.display = 'none';
     input.value = '';
@@ -493,6 +493,7 @@
       try {
         var data = JSON.parse(e.data);
         if (data.type === 'agent_message') {
+          if (sessionClosed) return; // ignore after session closed
           if (!agentJoined) onAgentJoined(data.senderName || 'Agent');
           addMessage('agent', data.senderName || 'Agent', data.content);
           lastMessageTime = new Date().toISOString();
@@ -520,6 +521,7 @@
         .then(function (d) {
           (d.messages || []).forEach(function (m) {
             if (m.sender_type === 'agent') {
+              if (sessionClosed) return; // ignore after session closed
               if (!agentJoined) onAgentJoined(m.sender_name || 'Agent');
               addMessage('agent', m.sender_name, m.content);
               document.getElementById('gc-chat-status').textContent = '';
