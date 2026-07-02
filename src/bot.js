@@ -36,12 +36,6 @@ async function postToThread(teamsConversationId, messageId, text) {
     console.log('Posted warning to thread ✅');
   } catch (err) {
     console.error('Thread warning error:', err.message);
-    // Fallback to webhook
-    if (process.env.TEAMS_WEBHOOK_URL) {
-      await axios.post(process.env.TEAMS_WEBHOOK_URL, {
-        type: 'message', text
-      }).catch(console.error);
-    }
   }
 }
 
