@@ -28,7 +28,6 @@ class GoChatBot extends ActivityHandler {
       }
       if (!global.processedActivities) global.processedActivities = new Map();
       global.processedActivities.set(activityId, Date.now());
-      // Clean up old entries
       if (global.processedActivities.size > 100) {
         const cutoff = Date.now() - 60000;
         for (const [key, time] of global.processedActivities) {
@@ -78,7 +77,31 @@ class GoChatBot extends ActivityHandler {
       // Try to find session ID from message first
       let sessionId = extractSessionId(text);
 
-      // Try by messageId range — find session whose thread started closest to this message
+      // First check exact match — including closed sessions to show warning
+      if (!sessionId && messageId) {
+        const exactSession = await pool.query(
+          `SELECT id, status FROM sessions WHERE teams_activity_id = $1 LIMIT 1`,
+          [messageId]
+        ).catch(() => ({ rows: [] }));
+
+        if (exactSession.rows.length > 0) {
+          if (exactSession.rows[0].status === 'closed') {
+            console.log('Session is closed — notifying agent');
+            if (process.env.TEAMS_WEBHOOK_URL) {
+              await axios.post(process.env.TEAMS_WEBHOOK_URL, {
+                type: 'message',
+                text: `❌ This chat session has already been closed. The visitor is no longer available.`
+              }).catch(err => console.error('Webhook notify error:', err.message));
+            }
+            await next();
+            return;
+          }
+          sessionId = exactSession.rows[0].id;
+          console.log('Found session by exact messageId:', sessionId);
+        }
+      }
+
+      // Try by messageId range — active sessions only within 24 hours
       if (!sessionId && messageId) {
         const sessionByMessage = await pool.query(
           `SELECT id, claimed_by FROM sessions 
@@ -145,7 +168,6 @@ class GoChatBot extends ActivityHandler {
 
         if (!session.rows.length || session.rows[0].status === 'closed') {
           console.log('Session not found or closed:', sessionId);
-          // Notify agent that session is closed
           if (process.env.TEAMS_WEBHOOK_URL) {
             await axios.post(process.env.TEAMS_WEBHOOK_URL, {
               type: 'message',
@@ -187,14 +209,12 @@ class GoChatBot extends ActivityHandler {
         const conversationRef = TurnContext.getConversationReference(context.activity);
 
         if (session.rows[0].status === 'waiting') {
-          // First reply — save everything including activity ID
           await pool.query(
             `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2, teams_activity_id = $3 WHERE id = $4`,
             [teamsConversationId, JSON.stringify(conversationRef), messageId, sessionId]
           );
           console.log('Saved first reply — teams_activity_id:', messageId);
         } else {
-          // Subsequent replies — only update conversation ref, NOT activity ID
           await pool.query(
             `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2 WHERE id = $3`,
             [teamsConversationId, JSON.stringify(conversationRef), sessionId]
@@ -219,7 +239,6 @@ class GoChatBot extends ActivityHandler {
                 { type: 'TextBlock', text: `✅ Claimed by ${from}`, weight: 'Bolder', color: 'Good' },
               ],
             };
-
             await this.adapter.continueConversation(conversationRef, async (updateContext) => {
               await updateContext.updateActivity({
                 type: 'message',
