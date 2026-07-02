@@ -92,11 +92,38 @@ app.post('/api/sessions', async (req, res) => {
   }
 });
 
+// ── POST /api/sessions/:id/end — visitor ends chat
+app.post('/api/sessions/:id/end', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query(
+      `UPDATE sessions SET status = 'closed', closed_at = NOW(), updated_at = NOW() WHERE id = $1`,
+      [id]
+    );
+    broadcastToSession(id, { type: 'session_closed' });
+    console.log('Session ended by visitor:', id);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to end session' });
+  }
+});
+
 // ── POST /api/sessions/:id/messages
 app.post('/api/sessions/:id/messages', async (req, res) => {
   const { id } = req.params;
   const { content, senderName } = req.body;
   if (!content) return res.status(400).json({ error: 'content is required' });
+
+  // ── Abuse filter
+  const abuseWords = ['fuck', 'shit', 'bastard', 'bitch', 'asshole', 'damn', 'crap'];
+  const hasAbuse = abuseWords.some(word =>
+    content.toLowerCase().includes(word)
+  );
+  if (hasAbuse) {
+    return res.status(400).json({ error: 'Your message contains inappropriate content. Please keep the conversation respectful.' });
+  }
+
   try {
     const session = await pool.query('SELECT * FROM sessions WHERE id = $1', [id]);
     if (!session.rows.length) return res.status(404).json({ error: 'Session not found' });
@@ -288,13 +315,13 @@ const bot = new GoChatBot(adapter);
 
 app.post('/api/messages', async (req, res) => {
   console.log('Received at /api/messages');
-  res.status(200).send('ok');
   try {
     await adapter.processActivity(req, res, async (context) => {
       await bot.run(context);
     });
   } catch (err) {
     console.error('Bot Framework error:', err.message);
+    if (!res.headersSent) res.status(200).send('ok');
   }
 });
 
@@ -449,11 +476,9 @@ async function replyToTeamsThread(session, message, senderName) {
       const token = await getBotToken();
 
       // Post as reply to the original thread message
-      const threadConversationId = activityId
-  ? `${conversationId};messageid=${activityId}`
-  : conversationId;
-
-const url = `${serviceUrl}v3/conversations/${encodeURIComponent(threadConversationId)}/activities`;
+      const url = activityId
+        ? `${serviceUrl}v3/conversations/${encodeURIComponent(conversationId)}/activities/${activityId}`
+        : `${serviceUrl}v3/conversations/${encodeURIComponent(conversationId)}/activities`;
 
       await axios.post(
         url,
