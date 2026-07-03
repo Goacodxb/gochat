@@ -128,7 +128,7 @@
     }
     @keyframes gc-spin { to { transform: rotate(360deg); } }
     #gc-ended-box {
-      display: none; background: #f0fdf4; border: 1px solid #bbf7d0;
+      display: none; background: #0f1d3a; border: 1px solid #69727d;
       border-radius: 8px; padding: 16px; text-align: center; margin-top: 8px;
     }
     #gc-ended-box p { font-size: 13px; color: #065f46; margin: 0; }
