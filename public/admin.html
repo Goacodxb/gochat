@@ -108,9 +108,9 @@
         </button>
 
         <div class="agent-row">
-          <div class="agent-avatar">PD</div>
+          <div class="agent-avatar" id="sidebarAgentAvatar">AD</div>
           <div>
-            <div class="agent-name">Praisy Daniel</div>
+            <div class="agent-name" id="sidebarAgentName">Admin</div>
             <div class="agent-role">Admin Agent</div>
           </div>
         </div>
@@ -153,7 +153,7 @@
           </div>
         </div>
 
-        <!-- STATS — no icons, no trend badges -->
+        <!-- STATS -->
         <div class="stats-row">
           <div class="stat-card sc-blue">
             <div class="stat-num" id="statTotal">—</div>
@@ -267,14 +267,7 @@
                 <div class="panel-title">agents</div>
               </div>
               <div id="agentsList">
-                <div class="agent-item">
-                  <div class="agent-item-avatar av-0">PD</div>
-                  <div>
-                    <div class="agent-item-name">Praisy Daniel</div>
-                    <div class="agent-item-stat">Lead agent</div>
-                  </div>
-                  <div class="agent-chats" id="pdChats">—</div>
-                </div>
+                <div style="padding:12px;color:var(--text-3);font-size:12px">loading…</div>
               </div>
             </div>
 
@@ -416,9 +409,9 @@ function loadSessions() {
       document.getElementById('statWaiting').textContent  = wait;
       document.getElementById('tcSessions').textContent   = allSessions.length;
       document.getElementById('navBadgeChats').textContent = allSessions.length;
-      document.getElementById('pdChats').textContent      = allSessions.filter(s=>s.claimed_by).length;
       seedCharts(allSessions.length, act, wait, +(document.getElementById('statLeads').textContent)||0);
       renderActivity();
+      renderAgents();
       if (curTab==='sessions') applyFilter();
     }).catch(()=>{});
 }
@@ -432,6 +425,47 @@ function loadLeads() {
       document.getElementById('navBadgeLeads').textContent = allLeads.length;
       if (curTab==='leads') applyFilter();
     }).catch(()=>{});
+}
+
+// ── RENDER AGENTS (dynamic) ──
+function renderAgents() {
+  const agents = {};
+  allSessions.forEach(s => {
+    if (s.claimed_by) {
+      if (!agents[s.claimed_by]) agents[s.claimed_by] = { total: 0, active: 0 };
+      agents[s.claimed_by].total++;
+      if (s.status === 'active') agents[s.claimed_by].active++;
+    }
+  });
+
+  const el = document.getElementById('agentsList');
+  const entries = Object.entries(agents);
+
+  if (!entries.length) {
+    el.innerHTML = '<div style="padding:12px;color:var(--text-3);font-size:12px;text-align:center">No agents active yet</div>';
+    return;
+  }
+
+  // Sort by active chats first
+  entries.sort((a, b) => b[1].active - a[1].active);
+
+  el.innerHTML = entries.map(([name, stats]) => `
+    <div class="agent-item">
+      <div class="agent-item-avatar av-${hashStr(name)%8}">${initials(name)}</div>
+      <div>
+        <div class="agent-item-name">${esc(name)}</div>
+        <div class="agent-item-stat">${stats.active} active · ${stats.total} total</div>
+      </div>
+      <div class="agent-chats" style="color:${stats.active>0?'var(--green)':'var(--text-3)'}">${stats.active}</div>
+    </div>
+  `).join('');
+
+  // Update sidebar agent info dynamically
+  const topAgent = entries[0];
+  if (topAgent) {
+    document.getElementById('sidebarAgentName').textContent = topAgent[0];
+    document.getElementById('sidebarAgentAvatar').textContent = initials(topAgent[0]);
+  }
 }
 
 // ── FILTER ──
