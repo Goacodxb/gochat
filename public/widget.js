@@ -69,7 +69,7 @@
     #gc-close:hover { color: white; }
     #gc-body { padding: 16px; flex: 1; overflow-y: auto; }
     #gc-welcome-msg {
-      border-radius: 0 8px 8px 0; padding: 10px 0px; margin-bottom: 14px;
+      border-radius: 8px 8px 8px 8px; padding: 10px 0px; margin-bottom: 14px;
     }
     #gc-welcome-msg p { font-size: 13px; color: #0f1d3a; margin: 0; }
     .gc-field-label {
@@ -248,7 +248,7 @@
 
       <!-- Offline form -->
       <div id="gc-offline" style="display:none">
-        <div id="gc-welcome-msg" style="border-left-color:#f59e0b;background:#fffbeb">
+        <div id="gc-welcome-msg" style="border-left-color:#f59e0b;background:#fffbeb;padding-left:10px">
           <p style="color:#92400e">We're currently offline. Leave your details and we'll get back to you soon.</p>
         </div>
         <div id="gc-offline-fields">
