@@ -147,13 +147,13 @@
       padding: 9px 14px; background: #0f1d3a; color: white;
       border: none; border-radius: 8px; cursor: pointer; font-size: 16px;
     }
-    #gc-chat-send:hover { background: #1a2f5a; }
+    #gc-chat-send:hover { background: #0f1d3a;; }
     #gc-visitor-end-btn {
-      width: 100%; padding: 8px; background: none; border: 1px solid #e5e7eb;
-      border-radius: 8px; font-size: 12px; color: #6b7280;
+      width: 100%; padding: 8px; background: none; border: 1px solid #0f1d3a;;
+      border-radius: 8px; font-size: 12px; color:#0f1d3a;;
       cursor: pointer; margin-top: 2px;
     }
-    #gc-visitor-end-btn:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+    #gc-visitor-end-btn:hover { background: #fef2f2; color: #ffffff; border-color: ##0f1d3a;; }
     #gc-offline-fields { display: flex; flex-direction: column; gap: 10px; }
     .gc-offline-input {
       width: 100%; padding: 9px 12px; border: 1px solid #e5e7eb;
@@ -252,13 +252,10 @@
           <p style="color:#92400e">⏰ We're currently offline. Leave your details and we'll get back to you soon.</p>
         </div>
         <div id="gc-offline-fields">
+        <input id="gc-off-name" class="gc-offline-input" type="text" placeholder="Full name" required> 
           <div>
-            <label class="gc-field-label">Full name</label>
-            <input id="gc-off-name" class="gc-offline-input" type="text" placeholder="John Smith" required>
-          </div>
-          <div>
-            <label class="gc-field-label">Email address</label>
-            <input id="gc-off-email" class="gc-offline-input" type="email" placeholder="john@company.com" required>
+           
+            <input id="gc-off-email" class="gc-offline-input" type="email" placeholder="Email address" required>
           </div>
           <div>
             <label class="gc-field-label">Your enquiry</label>
