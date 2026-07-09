@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   visitor_name VARCHAR(255) NOT NULL,
   visitor_email VARCHAR(255) NOT NULL,
+  visitor_phone VARCHAR(50),
   status VARCHAR(50) NOT NULL DEFAULT 'waiting',
   -- status: waiting | active | closed
   claimed_by VARCHAR(255),
@@ -26,6 +27,8 @@ CREATE TABLE IF NOT EXISTS sessions (
   -- Teams conversation/thread ID for routing replies
   teams_activity_id VARCHAR(500),
   -- ID of the Adaptive Card message in Teams
+  teams_conversation_ref TEXT,
+  -- Full conversation reference for proactive messaging
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   closed_at TIMESTAMPTZ
@@ -47,6 +50,7 @@ CREATE TABLE IF NOT EXISTS leads (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL,
+  phone VARCHAR(50),
   message TEXT NOT NULL,
   notified BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -57,4 +61,8 @@ CREATE INDEX IF NOT EXISTS idx_messages_session_id ON messages(session_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
 CREATE INDEX IF NOT EXISTS idx_sessions_created_at ON sessions(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads(created_at DESC);
+
+-- Add columns if not exists (for existing databases)
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS teams_conversation_ref TEXT;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS visitor_phone VARCHAR(50);
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS phone VARCHAR(50);
