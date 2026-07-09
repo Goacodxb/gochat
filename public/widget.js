@@ -162,7 +162,7 @@
       border-radius: 8px; font-size: 12px; color: #0f1d3a;
       cursor: pointer; margin-top: 2px;
     }
-    #gc-visitor-end-btn:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+    #gc-visitor-end-btn:hover { background:#0f1d3a; color:#ffffff; border-color:#0f1d3a; }
     #gc-offline-fields { display: flex; flex-direction: column; gap: 10px; }
     .gc-offline-input {
       width: 100%; padding: 9px 12px; border: 1px solid #e5e7eb;
@@ -177,8 +177,8 @@
     }
     #gc-off-send:hover { background: #1a2f5a; }
     #gc-off-success {
-      display: none; font-size: 14px; color: #065f46;
-      background: #d1fae5; padding: 12px; border-radius: 8px; margin-top: 8px;
+      display: none; font-size: 14px; color: #ffffff;
+      background: #0f1d3a; padding: 12px; border-radius: 8px; margin-top: 8px;
     }
   `;
   document.head.appendChild(style);
@@ -280,7 +280,7 @@
       <!-- Offline form -->
       <div id="gc-offline" style="display:none">
         <div id="gc-welcome-msg" style="border-left-color:#f59e0b;background:#fffbeb;padding-left:10px">
-          <p style="color:#92400e">⏰ We're currently offline. Leave your details and we'll get back to you soon.</p>
+          <p style="color:#92400e">We're currently offline. Leave your details and we'll get back to you soon.</p>
         </div>
         <div id="gc-offline-fields">
           <div>
