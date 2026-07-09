@@ -431,6 +431,25 @@ async function postToTeams(sessionId, name, email, message) {
 async function replyToTeamsThread(session, message, senderName) {
   console.log('Sending visitor follow-up to Teams:', message);
 
+  // Build @mention if we have agent's Teams ID
+  const agentId = session.claimed_by_id;
+  const agentName = session.claimed_by;
+  
+  let mentionText = '';
+  let entities = [];
+  
+  if (agentId && agentName) {
+    mentionText = `<at>${agentName}</at> `;
+    entities = [{
+      type: 'mention',
+      text: `<at>${agentName}</at>`,
+      mentioned: {
+        id: agentId,
+        name: agentName
+      }
+    }];
+  }
+
   const adaptiveCard = {
     $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
     type: 'AdaptiveCard',
@@ -438,7 +457,7 @@ async function replyToTeamsThread(session, message, senderName) {
     body: [
       { type: 'TextBlock', text: `💬 ${senderName} (visitor)`, weight: 'Bolder', color: 'Accent' },
       { type: 'TextBlock', text: message, wrap: true },
-      { type: 'TextBlock', text: session.claimed_by ? `Claimed by: ${session.claimed_by}` : `To reply: @GoChat ${session.id} <your message>`, wrap: true, isSubtle: true, size: 'Small' },
+      { type: 'TextBlock', text: agentName ? `Claimed by: ${agentName}` : `To reply: @GoChat ${session.id} <your message>`, wrap: true, isSubtle: true, size: 'Small' },
     ],
   };
 
@@ -451,12 +470,23 @@ async function replyToTeamsThread(session, message, senderName) {
       const activityId = session.teams_activity_id;
       const token = await getBotToken();
       const threadConversationId = activityId ? `${conversationId};messageid=${activityId}` : conversationId;
+
+      // Post with @mention if agent ID is available, otherwise just adaptive card
+      const messageBody = agentId ? {
+        type: 'message',
+        text: `${mentionText}New message from ${senderName}: "${message}"`,
+        entities: entities,
+      } : {
+        type: 'message',
+        attachments: [{ contentType: 'application/vnd.microsoft.card.adaptive', content: adaptiveCard }],
+      };
+
       await axios.post(
         `${serviceUrl}v3/conversations/${encodeURIComponent(threadConversationId)}/activities`,
-        { type: 'message', attachments: [{ contentType: 'application/vnd.microsoft.card.adaptive', content: adaptiveCard }] },
+        messageBody,
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );
-      console.log('Visitor follow-up sent via Bot Framework REST ✅');
+      console.log('Visitor follow-up sent via Bot Framework REST ✅' + (agentId ? ' with @mention' : ''));
       return;
     } catch (err) {
       console.error('Bot Framework REST error:', err.response?.data || err.message);
@@ -479,7 +509,7 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`GoChat server running on port ${PORT}`));
 
 // ── Auto-release idle claimed sessions (every 2 minutes)
-const AUTO_RELEASE_MINUTES = 3;
+const AUTO_RELEASE_MINUTES = 10;
 setInterval(async () => {
   try {
     const result = await pool.query(`
