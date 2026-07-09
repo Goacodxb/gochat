@@ -273,12 +273,8 @@
     </div>
     <div class="modal-messages" id="modalMsgs"></div>
     <div class="modal-footer" id="modalFooter" style="display:none">
-      <div class="reply-label">send a reply</div>
-      <div class="reply-row">
-        <textarea class="reply-ta" id="replyInput"
-          placeholder="Type your message… (Enter to send)" rows="2"
-          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendReply()}"></textarea>
-        <button class="btn-send" id="btnSend" onclick="sendReply()">send →</button>
+      <div style="padding:8px 12px;background:#f0f9ff;border-radius:8px;font-size:12px;color:#0369a1;text-align:center">
+        💬 To reply, go to the <strong>Goaco Chatbot</strong> channel in Microsoft Teams and reply in the visitor's thread.
       </div>
     </div>
   </div>
@@ -369,6 +365,13 @@ function loadSessions() {
       document.getElementById('statWaiting').textContent   = wait;
       document.getElementById('tcSessions').textContent    = allSessions.length;
       document.getElementById('navBadgeChats').textContent = allSessions.length;
+
+      // Update browser tab title with waiting count
+      if (wait > 0) {
+        document.title = `(${wait} waiting) GoChat Admin`;
+      } else {
+        document.title = 'GoChat Admin';
+      }
       seedCharts(allSessions.length, act, wait, +(document.getElementById('statLeads').textContent)||0);
       renderActivity();
       renderAgents();
@@ -433,6 +436,15 @@ function applyFilter() {
     const email = (r.visitor_email||r.email||'').toLowerCase();
     return (!q||name.includes(q)||email.includes(q)) && (!st||r.status===st);
   });
+
+  // Sort: waiting first, then active, then closed
+  if (curTab==='sessions') {
+    filtered.sort((a, b) => {
+      const order = { waiting: 0, active: 1, closed: 2 };
+      return (order[a.status] ?? 3) - (order[b.status] ?? 3);
+    });
+  }
+
   document.getElementById('resultInfo').textContent = filtered.length + ' result' + (filtered.length!==1?'s':'');
   renderTable();
 }
@@ -458,8 +470,9 @@ function renderTable() {
       const init  = initials(s.visitor_name);
       const avCls = 'av-' + (hashStr(s.visitor_name)%8);
       const isLive = s.status==='active'||s.status==='waiting';
-      const phone = s.visitor_phone ? `<div class="tbl-phone"> ${esc(s.visitor_phone)}</div>` : '';
-      return `<tr onclick="viewChat('${s.id}','${esc(s.visitor_name)}','${esc(s.visitor_email||'')}','${s.status}','${esc(s.visitor_phone||'')}')">
+      const rowStyle = s.status==='waiting' ? 'background:#fffbeb;border-left:3px solid #f59e0b;' : '';
+      const phone = s.visitor_phone ? `<div class="tbl-phone">📞 ${esc(s.visitor_phone)}</div>` : '';
+      return `<tr style="${rowStyle}" onclick="viewChat('${s.id}','${esc(s.visitor_name)}','${esc(s.visitor_email||'')}','${s.status}','${esc(s.visitor_phone||'')}')">
         <td>
           <div class="visitor-cell">
             <div class="tbl-avatar ${avCls}">${esc(init)}</div>
@@ -595,19 +608,6 @@ function loadMsgs(){
         </div>`).join('');
       el.scrollTop=el.scrollHeight;
     }).catch(()=>{});
-}
-
-function sendReply(){
-  const inp=document.getElementById('replyInput');
-  const content=inp.value.trim();
-  if(!content||!curSessionId)return;
-  const btn=document.getElementById('btnSend');
-  btn.disabled=true; btn.textContent='sending…';
-  fetch('/api/admin/reply',{
-    method:'POST', headers:{'Content-Type':'application/json','x-admin-secret':secret},
-    body:JSON.stringify({sessionId:curSessionId,content,agentName:'Agent'})
-  }).then(()=>{ inp.value='';btn.disabled=false;btn.textContent='send →'; loadMsgs();showToast('reply sent'); })
-  .catch(()=>{btn.disabled=false;btn.textContent='send →';});
 }
 
 function closeSession(){
