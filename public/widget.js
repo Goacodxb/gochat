@@ -14,6 +14,7 @@
   var isOnline = false;
   var agentJoined = false;
   var sessionClosed = false;
+  var currentAgent = null;
 
   var style = document.createElement('style');
   style.textContent = `
@@ -243,7 +244,7 @@
       <!-- Offline form -->
       <div id="gc-offline" style="display:none">
         <div id="gc-welcome-msg" style="border-left-color:#f59e0b;background:#fffbeb;padding-left:10px">
-          <p style="color:#92400e">We're currently offline. Leave your details and we'll get back to you soon.</p>
+          <p style="color:#92400e">⏰ We're currently offline. Leave your details and we'll get back to you soon.</p>
         </div>
         <div id="gc-offline-fields">
           <div>
@@ -407,8 +408,10 @@
 
   // ── Agent joined ───────────────────────────────────────
   function onAgentJoined(agentName) {
-    if (agentJoined) return;
+    // If same agent re-joining after auto-release — don't show join message again
+    if (agentJoined && currentAgent === agentName) return;
     agentJoined = true;
+    currentAgent = agentName;
     document.getElementById('gc-waiting-box').style.display = 'none';
     addSystemMessage('🎉 ' + agentName + ' has joined the chat');
     document.getElementById('gc-status-dot').style.background = '#22c55e';
@@ -419,7 +422,10 @@
 
   // ── Agent left (auto-release) ──────────────────────────
   function onAgentLeft() {
+    // Only trigger if agent was actually joined
+    if (!agentJoined) return;
     agentJoined = false;
+    currentAgent = null;
     document.getElementById('gc-chat-input').classList.remove('active');
     document.getElementById('gc-waiting-box').style.display = 'block';
     document.getElementById('gc-status-dot').style.background = '#f59e0b';
