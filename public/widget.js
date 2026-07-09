@@ -200,7 +200,7 @@
   widget.innerHTML = `
     <div id="gc-header">
       <div id="gc-header-left">
-        <div id="gc-avatar">
+          <div id="gc-avatar">
           <img src="https://raw.githubusercontent.com/Goacodxb/gochat/main/public/img/goidentity.png" alt="GoIdentity" onerror="this.parentElement.innerHTML='🏢'">
         </div>
         <div>
