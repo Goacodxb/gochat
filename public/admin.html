@@ -12,9 +12,7 @@
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-brand">
-      <img
-        class="login-logo-img"
-        id="loginLogoImg"
+      <img class="login-logo-img" id="loginLogoImg"
         src="https://raw.githubusercontent.com/Goacodxb/gochat/main/public/img/goidentity.png"
         alt="goidentity logo"
         onerror="this.style.display='none';document.getElementById('loginLogoFb').style.display='flex'">
@@ -25,10 +23,8 @@
       </div>
       <div class="live-pill"><div class="live-dot"></div>Live</div>
     </div>
-
     <div class="login-title">Welcome back</div>
     <div class="login-sub">Sign in to your gochat dashboard</div>
-
     <div class="field-group">
       <label class="field-label" for="secretInput">Admin password</label>
       <div class="field-wrap">
@@ -38,12 +34,10 @@
           onkeydown="if(event.key==='Enter')login()">
       </div>
     </div>
-
     <button class="btn-signin" onclick="login()">
       <span id="signinText">Sign in to dashboard</span>
       <span>→</span>
     </button>
-
     <div class="security-row">
       <span>🛡️</span>
       <span>Secured with admin authentication</span>
@@ -54,18 +48,13 @@
 
 <!-- ══════════════ APP ══════════════ -->
 <div id="appScreen">
-
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-
   <div class="app-layout">
 
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
-
       <div class="sidebar-logo">
-        <img
-          class="sidebar-logo-img"
-          id="sidebarLogoImg"
+        <img class="sidebar-logo-img" id="sidebarLogoImg"
           src="https://raw.githubusercontent.com/Goacodxb/gochat/main/public/img/goidentity.png"
           alt="goidentity"
           onerror="this.style.display='none';document.getElementById('sidebarLogoFb').style.display='flex'">
@@ -75,7 +64,6 @@
           <div class="sidebar-brand-sub">gochat Admin</div>
         </div>
       </div>
-
       <div class="sidebar-section">
         <div class="sidebar-section-label">menu</div>
         <div class="nav-item active" onclick="showPanel('chats',this)">
@@ -97,7 +85,6 @@
           <span class="nav-label">Agents</span>
         </div>
       </div>
-
       <div class="sidebar-bottom">
         <button class="avail-pill offline" id="availPill" onclick="toggleAvailability()">
           <div class="avail-pill-left">
@@ -106,7 +93,6 @@
           </div>
           <span class="avail-toggle-label">toggle</span>
         </button>
-
         <div class="agent-row">
           <div class="agent-avatar" id="sidebarAgentAvatar">AD</div>
           <div>
@@ -114,7 +100,6 @@
             <div class="agent-role">Admin Agent</div>
           </div>
         </div>
-
         <button class="btn-logout" onclick="logout()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           log out
@@ -124,7 +109,6 @@
 
     <!-- MAIN -->
     <div class="main">
-
       <div class="topbar">
         <button class="hamburger" onclick="openSidebar()">☰</button>
         <div>
@@ -145,7 +129,6 @@
       </div>
 
       <div class="page">
-
         <div class="page-header">
           <div>
             <div class="page-heading" id="pageHeading">Chat History</div>
@@ -179,7 +162,6 @@
 
         <!-- CONTENT GRID -->
         <div class="content-grid">
-
           <!-- TABLE CARD -->
           <div class="card">
             <div class="card-header">
@@ -196,7 +178,6 @@
                 </button>
               </div>
             </div>
-
             <div class="table-toolbar">
               <div class="tbl-search">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -212,15 +193,14 @@
               </select>
               <span class="result-info" id="resultInfo"></span>
             </div>
-
             <div style="overflow-x:auto">
               <table>
                 <thead>
                   <tr>
                     <th>visitor</th>
                     <th>status</th>
-                    <th class="col-agent">Agent</th>
-                    <th class="col-date">Started</th>
+                    <th class="col-agent">agent</th>
+                    <th class="col-date">started</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -234,7 +214,6 @@
                 </tbody>
               </table>
             </div>
-
             <div class="pagination">
               <div class="page-left">
                 rows:
@@ -251,7 +230,6 @@
 
           <!-- RIGHT COLUMN -->
           <div class="right-col">
-
             <div class="panel">
               <div class="panel-header">
                 <div class="panel-title">Live activity</div>
@@ -261,16 +239,14 @@
                 <div style="padding:20px;text-align:center;color:var(--text-3);font-size:12px">loading…</div>
               </div>
             </div>
-
             <div class="panel">
               <div class="panel-header">
-                <div class="panel-title">Agents</div>
+                <div class="panel-title">agents</div>
               </div>
               <div id="agentsList">
                 <div style="padding:12px;color:var(--text-3);font-size:12px">loading…</div>
               </div>
             </div>
-
           </div>
         </div>
       </div>
@@ -287,6 +263,7 @@
         <div>
           <div class="modal-vis-name" id="modalName">—</div>
           <div class="modal-vis-meta" id="modalMeta">—</div>
+          <div class="modal-vis-phone" id="modalPhone" style="font-size:11px;color:var(--text-3);margin-top:2px"></div>
         </div>
       </div>
       <div class="modal-actions">
@@ -317,17 +294,9 @@ let curTab = 'sessions';
 let page = 1, pageSize = 10;
 let curSessionId = null, msgTimer = null;
 
-// ── SIDEBAR (mobile) ──
-function openSidebar()  {
-  document.getElementById('sidebar').classList.add('open');
-  document.getElementById('sidebarOverlay').classList.add('show');
-}
-function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebarOverlay').classList.remove('show');
-}
+function openSidebar()  { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('show'); }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
 
-// ── LOGOUT ──
 function logout() {
   if (!confirm('log out of gochat admin?')) return;
   secret = ''; allSessions = []; allLeads = []; filtered = [];
@@ -338,10 +307,8 @@ function logout() {
   closeSidebar();
 }
 
-// ── MINI CHARTS ──
 function renderMiniChart(id, color, vals) {
-  const el = document.getElementById(id);
-  if (!el) return;
+  const el = document.getElementById(id); if (!el) return;
   const max = Math.max(...vals, 1);
   el.innerHTML = vals.map(v => {
     const h = Math.max(4, Math.round((v / max) * 32));
@@ -349,15 +316,13 @@ function renderMiniChart(id, color, vals) {
   }).join('');
 }
 function seedCharts(total, active, waiting, leads) {
-  const rnd = (base, n) =>
-    Array.from({length:n}, (_,i) => Math.max(0, Math.round(base * (0.4 + Math.random()*0.6) * (i/n))));
+  const rnd = (base, n) => Array.from({length:n}, (_,i) => Math.max(0, Math.round(base * (0.4 + Math.random()*0.6) * (i/n))));
   renderMiniChart('chartTotal',   'blue',   [...rnd(total,6),   total]);
   renderMiniChart('chartActive',  'green',  [...rnd(active,6),  active]);
   renderMiniChart('chartWaiting', 'amber',  [...rnd(waiting,6), waiting]);
   renderMiniChart('chartLeads',   'purple', [...rnd(leads,6),   leads]);
 }
 
-// ── LOGIN ──
 function login() {
   secret = document.getElementById('secretInput').value;
   const btn = document.querySelector('.btn-signin');
@@ -366,9 +331,7 @@ function login() {
   fetch('/api/admin/sessions', { headers: {'x-admin-secret': secret} })
     .then(r => {
       btn.disabled = false; txt.textContent = 'Sign in to dashboard';
-      if (r.status === 401) {
-        document.getElementById('loginError').style.display = 'block'; return;
-      }
+      if (r.status === 401) { document.getElementById('loginError').style.display = 'block'; return; }
       document.getElementById('loginError').style.display = 'none';
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('appScreen').style.display   = 'block';
@@ -378,22 +341,19 @@ function login() {
     .catch(() => { btn.disabled = false; txt.textContent = 'Sign in to dashboard'; });
 }
 
-// ── LOAD ALL ──
 function loadAll() { loadSessions(); loadLeads(); loadAvailability(); }
 
 function loadAvailability() {
   fetch('/api/availability').then(r=>r.json()).then(d => {
     availability = d.online;
-    const pill = document.getElementById('availPill');
     document.getElementById('availText').textContent = d.online ? 'online' : 'offline';
-    pill.className = 'avail-pill ' + (d.online ? 'online' : 'offline');
+    document.getElementById('availPill').className = 'avail-pill ' + (d.online ? 'online' : 'offline');
   }).catch(()=>{});
 }
 
 function toggleAvailability() {
   fetch('/api/admin/availability', {
-    method:'POST',
-    headers:{'Content-Type':'application/json','x-admin-secret':secret},
+    method:'POST', headers:{'Content-Type':'application/json','x-admin-secret':secret},
     body: JSON.stringify({online: !availability})
   }).then(()=> loadAvailability());
 }
@@ -404,10 +364,10 @@ function loadSessions() {
       allSessions = d.sessions || [];
       const act  = allSessions.filter(s=>s.status==='active').length;
       const wait = allSessions.filter(s=>s.status==='waiting').length;
-      document.getElementById('statTotal').textContent    = allSessions.length;
-      document.getElementById('statActive').textContent   = act;
-      document.getElementById('statWaiting').textContent  = wait;
-      document.getElementById('tcSessions').textContent   = allSessions.length;
+      document.getElementById('statTotal').textContent     = allSessions.length;
+      document.getElementById('statActive').textContent    = act;
+      document.getElementById('statWaiting').textContent   = wait;
+      document.getElementById('tcSessions').textContent    = allSessions.length;
       document.getElementById('navBadgeChats').textContent = allSessions.length;
       seedCharts(allSessions.length, act, wait, +(document.getElementById('statLeads').textContent)||0);
       renderActivity();
@@ -437,18 +397,13 @@ function renderAgents() {
       if (s.status === 'active') agents[s.claimed_by].active++;
     }
   });
-
   const el = document.getElementById('agentsList');
   const entries = Object.entries(agents);
-
   if (!entries.length) {
     el.innerHTML = '<div style="padding:12px;color:var(--text-3);font-size:12px;text-align:center">No agents active yet</div>';
     return;
   }
-
-  // Sort by active chats first
   entries.sort((a, b) => b[1].active - a[1].active);
-
   el.innerHTML = entries.map(([name, stats]) => `
     <div class="agent-item">
       <div class="agent-item-avatar av-${hashStr(name)%8}">${initials(name)}</div>
@@ -459,20 +414,14 @@ function renderAgents() {
       <div class="agent-chats" style="color:${stats.active>0?'var(--green)':'var(--text-3)'}">${stats.active}</div>
     </div>
   `).join('');
-
-  // Update sidebar agent info dynamically
   const topAgent = entries[0];
   if (topAgent) {
-    document.getElementById('sidebarAgentName').textContent = topAgent[0];
-    document.getElementById('sidebarAgentAvatar').textContent = initials(topAgent[0]);
+    document.getElementById('sidebarAgentName').textContent    = topAgent[0];
+    document.getElementById('sidebarAgentAvatar').textContent  = initials(topAgent[0]);
   }
 }
 
-// ── FILTER ──
-function onGlobalSearch() {
-  document.getElementById('tableSearch').value = document.getElementById('globalSearch').value;
-  onTableSearch();
-}
+function onGlobalSearch() { document.getElementById('tableSearch').value = document.getElementById('globalSearch').value; onTableSearch(); }
 function onTableSearch() { page=1; applyFilter(); }
 
 function applyFilter() {
@@ -484,12 +433,10 @@ function applyFilter() {
     const email = (r.visitor_email||r.email||'').toLowerCase();
     return (!q||name.includes(q)||email.includes(q)) && (!st||r.status===st);
   });
-  document.getElementById('resultInfo').textContent =
-    filtered.length + ' result' + (filtered.length!==1?'s':'');
+  document.getElementById('resultInfo').textContent = filtered.length + ' result' + (filtered.length!==1?'s':'');
   renderTable();
 }
 
-// ── RENDER TABLE ──
 function renderTable() {
   const start = (page-1)*pageSize;
   const slice = filtered.slice(start, start+pageSize);
@@ -511,13 +458,15 @@ function renderTable() {
       const init  = initials(s.visitor_name);
       const avCls = 'av-' + (hashStr(s.visitor_name)%8);
       const isLive = s.status==='active'||s.status==='waiting';
-      return `<tr onclick="viewChat('${s.id}','${esc(s.visitor_name)}','${esc(s.visitor_email||'')}','${s.status}')">
+      const phone = s.visitor_phone ? `<div class="tbl-phone">📞 ${esc(s.visitor_phone)}</div>` : '';
+      return `<tr onclick="viewChat('${s.id}','${esc(s.visitor_name)}','${esc(s.visitor_email||'')}','${s.status}','${esc(s.visitor_phone||'')}')">
         <td>
           <div class="visitor-cell">
             <div class="tbl-avatar ${avCls}">${esc(init)}</div>
             <div>
               <div class="tbl-name">${esc(s.visitor_name)}</div>
               <div class="tbl-email">${esc(s.visitor_email||'—')}</div>
+              ${phone}
             </div>
           </div>
         </td>
@@ -526,7 +475,7 @@ function renderTable() {
         <td class="tbl-date col-date">${formatDate(s.created_at)}</td>
         <td>
           <button class="${isLive?'btn-reply':'btn-view'}"
-            onclick="event.stopPropagation();viewChat('${s.id}','${esc(s.visitor_name)}','${esc(s.visitor_email||'')}','${s.status}')">
+            onclick="event.stopPropagation();viewChat('${s.id}','${esc(s.visitor_name)}','${esc(s.visitor_email||'')}','${s.status}','${esc(s.visitor_phone||'')}')">
             ${isLive?'reply':'view'}
           </button>
         </td>
@@ -540,6 +489,7 @@ function renderTable() {
           <div>
             <div class="tbl-name">${esc(l.name)}</div>
             <div class="tbl-email">${esc(l.email)}</div>
+            ${l.phone ? `<div class="tbl-phone">📞 ${esc(l.phone)}</div>` : ''}
           </div>
         </div>
       </td>
@@ -574,21 +524,14 @@ function renderPagination() {
 function buildRange(cur,total){
   const r=[]; let last=0;
   for(let i=1;i<=total;i++){
-    if(i===1||i===total||Math.abs(i-cur)<=1){
-      if(last&&i-last>1)r.push('…');
-      r.push(i);last=i;
-    }
+    if(i===1||i===total||Math.abs(i-cur)<=1){ if(last&&i-last>1)r.push('…'); r.push(i);last=i; }
   }
   return r;
 }
 
-function goPage(p){
-  if(p<1||p>Math.ceil(filtered.length/pageSize))return;
-  page=p; renderTable();
-}
+function goPage(p){ if(p<1||p>Math.ceil(filtered.length/pageSize))return; page=p; renderTable(); }
 function setPageSize(v){pageSize=v;page=1;renderTable();}
 
-// ── TABS / PANELS ──
 function switchTab(tab,el){
   curTab=tab; page=1;
   document.querySelectorAll('.ctab').forEach(b=>b.classList.remove('active'));
@@ -600,44 +543,33 @@ function switchTab(tab,el){
 function showPanel(panel,el){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   el.classList.add('active');
-  if(panel==='chats'){
-    document.getElementById('topbarTitle').textContent='chat history';
-    document.getElementById('pageHeading').textContent='chat history';
-    switchTab('sessions',document.querySelectorAll('.ctab')[0]);
-  }
-  if(panel==='leads'){
-    document.getElementById('topbarTitle').textContent='offline leads';
-    document.getElementById('pageHeading').textContent='offline leads';
-    switchTab('leads',document.querySelectorAll('.ctab')[1]);
-  }
+  if(panel==='chats'){ document.getElementById('topbarTitle').textContent='chat history'; document.getElementById('pageHeading').textContent='chat history'; switchTab('sessions',document.querySelectorAll('.ctab')[0]); }
+  if(panel==='leads'){ document.getElementById('topbarTitle').textContent='offline leads'; document.getElementById('pageHeading').textContent='offline leads'; switchTab('leads',document.querySelectorAll('.ctab')[1]); }
   closeSidebar();
 }
 
-// ── ACTIVITY ──
 function renderActivity(){
   const recent=[...allSessions].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,5);
   const colors={active:'green',waiting:'amber',closed:'blue'};
   const el=document.getElementById('activityList');
-  if(!recent.length){
-    el.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-3);font-size:12px">no activity yet</div>';
-    return;
-  }
+  if(!recent.length){ el.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-3);font-size:12px">no activity yet</div>'; return; }
   el.innerHTML=recent.map(s=>`
-    <div class="activity-item" onclick="viewChat('${s.id}','${esc(s.visitor_name)}','${esc(s.visitor_email||'')}','${s.status}')">
+    <div class="activity-item" onclick="viewChat('${s.id}','${esc(s.visitor_name)}','${esc(s.visitor_email||'')}','${s.status}','${esc(s.visitor_phone||'')}')">
       <div class="act-dot-wrap"><div class="act-dot ${colors[s.status]||'blue'}"></div></div>
       <div class="act-text"><strong>${esc(s.visitor_name)}</strong> started a chat</div>
       <div class="act-time">${formatDate(s.created_at)}</div>
     </div>`).join('');
 }
 
-// ── MODAL ──
-function viewChat(id,name,email,status){
+// ── MODAL — now accepts phone ──
+function viewChat(id,name,email,status,phone){
   curSessionId=id;
   const avCls='av-'+(hashStr(name)%8);
   document.getElementById('modalAv').textContent=initials(name);
   document.getElementById('modalAv').className='modal-avatar '+avCls;
   document.getElementById('modalName').textContent=name;
   document.getElementById('modalMeta').textContent=email||'no email';
+  document.getElementById('modalPhone').textContent=phone ? '📞 '+phone : '';
   const isLive=status==='active'||status==='waiting';
   document.getElementById('btnEnd').style.display=isLive?'':'none';
   document.getElementById('modalFooter').style.display=isLive?'':'none';
@@ -653,10 +585,7 @@ function loadMsgs(){
     .then(r=>r.json()).then(d=>{
       const msgs=d.messages||[];
       const el=document.getElementById('modalMsgs');
-      if(!msgs.length){
-        el.innerHTML='<div class="empty-state"><div class="empty-title">no messages yet</div></div>';
-        return;
-      }
+      if(!msgs.length){ el.innerHTML='<div class="empty-state"><div class="empty-title">no messages yet</div></div>'; return; }
       el.innerHTML=msgs.map(m=>`
         <div class="msg-row ${m.sender_type}">
           <div class="msg-meta">${esc(m.sender_name)} · ${formatDate(m.created_at)}</div>
@@ -673,20 +602,16 @@ function sendReply(){
   const btn=document.getElementById('btnSend');
   btn.disabled=true; btn.textContent='sending…';
   fetch('/api/admin/reply',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','x-admin-secret':secret},
+    method:'POST', headers:{'Content-Type':'application/json','x-admin-secret':secret},
     body:JSON.stringify({sessionId:curSessionId,content,agentName:'Agent'})
-  }).then(()=>{
-    inp.value='';btn.disabled=false;btn.textContent='send →';
-    loadMsgs();showToast('reply sent');
-  }).catch(()=>{btn.disabled=false;btn.textContent='send →';});
+  }).then(()=>{ inp.value='';btn.disabled=false;btn.textContent='send →'; loadMsgs();showToast('reply sent'); })
+  .catch(()=>{btn.disabled=false;btn.textContent='send →';});
 }
 
 function closeSession(){
   if(!curSessionId||!confirm('end this chat?'))return;
   fetch('/api/admin/close',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','x-admin-secret':secret},
+    method:'POST', headers:{'Content-Type':'application/json','x-admin-secret':secret},
     body:JSON.stringify({sessionId:curSessionId})
   }).then(()=>{closeModal();loadAll();showToast('chat ended');});
 }
@@ -696,18 +621,14 @@ function closeModal(){
   if(msgTimer){clearInterval(msgTimer);msgTimer=null;}
   curSessionId=null;
 }
-window.addEventListener('click',e=>{
-  if(e.target===document.getElementById('chatModal'))closeModal();
-});
+window.addEventListener('click',e=>{ if(e.target===document.getElementById('chatModal'))closeModal(); });
 
-// ── TOAST ──
 function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2600);
 }
 
-// ── UTILS ──
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function formatDate(iso){return new Date(iso).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
 function initials(name){return(name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);}
