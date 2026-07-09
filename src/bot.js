@@ -74,7 +74,7 @@ class GoChatBot extends ActivityHandler {
       text = text.replace(/<at>[^<]*<\/at>/gi, '').trim();
 
       // Ignore empty or bot confirmation messages
-      if (!text || text.startsWith('✅') || text.startsWith('❌') || text.startsWith('⚠️') || text.startsWith('👋') || text.startsWith('💬') || text.startsWith('🚫')) {
+      if (!text || text.startsWith('✅') || text.startsWith('❌') || text.startsWith('⚠️') || text.startsWith('👋') || text.startsWith('💬') || text.startsWith('🚫') || text.startsWith('⏰')) {
         await next();
         return;
       }
@@ -132,7 +132,7 @@ class GoChatBot extends ActivityHandler {
         }
       }
 
-      // Try by messageId range — active sessions only within 24 hours
+      // Try by messageId range — active/waiting sessions only within 24 hours
       if (!sessionId && messageId) {
         const sessionByMessage = await pool.query(
           `SELECT id, claimed_by FROM sessions 
@@ -208,20 +208,33 @@ class GoChatBot extends ActivityHandler {
           return;
         }
 
+        const previousStatus = session.rows[0].status;
         let justClaimed = false;
 
-        // Claim if waiting
-        if (session.rows[0].status === 'waiting') {
-          await pool.query(
-            `UPDATE sessions SET status='active', claimed_by=$1, updated_at=NOW() WHERE id=$2`,
+        // Claim if waiting — use atomic update to prevent race conditions
+        if (previousStatus === 'waiting') {
+          const claimResult = await pool.query(
+            `UPDATE sessions SET status='active', claimed_by=$1, updated_at=NOW() 
+             WHERE id=$2 AND status='waiting' RETURNING *`,
             [from, sessionId]
           );
-          broadcastToSession(sessionId, { type: 'agent_joined', agentName: from });
-          console.log('Session claimed by:', from);
-          justClaimed = true;
+          if (claimResult.rows.length > 0) {
+            broadcastToSession(sessionId, { type: 'agent_joined', agentName: from });
+            console.log('Session claimed by:', from);
+            justClaimed = true;
+          } else {
+            // Another agent claimed it between our read and write
+            const updated = await pool.query('SELECT claimed_by FROM sessions WHERE id = $1', [sessionId]);
+            const claimer = updated.rows[0]?.claimed_by || 'another agent';
+            await postToThread(teamsConversationId, messageId,
+              `🚫 **${from}** — This chat was just claimed by **${claimer}**.`
+            );
+            await next();
+            return;
+          }
         }
         // If already claimed by another agent — notify in thread and ignore
-        else if (session.rows[0].status === 'active' &&
+        else if (previousStatus === 'active' &&
                  session.rows[0].claimed_by &&
                  session.rows[0].claimed_by !== from) {
           console.log('Session already claimed by:', session.rows[0].claimed_by, '— ignoring:', from);
@@ -234,18 +247,20 @@ class GoChatBot extends ActivityHandler {
           return;
         }
 
-        // Save EXACT conversation reference from TurnContext
+        // Save conversation reference
         const conversationRef = TurnContext.getConversationReference(context.activity);
 
-        if (session.rows[0].status === 'waiting') {
+        if (justClaimed) {
+          // First claim — save everything including activity ID
           await pool.query(
             `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2, teams_activity_id = $3 WHERE id = $4`,
             [teamsConversationId, JSON.stringify(conversationRef), messageId, sessionId]
           );
           console.log('Saved first reply — teams_activity_id:', messageId);
         } else {
+          // Subsequent replies — only update conversation ref, NOT activity ID
           await pool.query(
-            `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2 WHERE id = $3`,
+            `UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2, updated_at = NOW() WHERE id = $3`,
             [teamsConversationId, JSON.stringify(conversationRef), sessionId]
           );
           console.log('Updated conversation ref — keeping original teams_activity_id');
@@ -284,9 +299,9 @@ class GoChatBot extends ActivityHandler {
           }
         }
 
-        // Check for duplicate within 5 seconds
+        // Check for duplicate within 30 seconds
         const existing = await pool.query(
-          `SELECT id FROM messages WHERE session_id=$1 AND sender_name=$2 AND content=$3 AND created_at > NOW() - INTERVAL '5 seconds'`,
+          `SELECT id FROM messages WHERE session_id=$1 AND sender_name=$2 AND content=$3 AND created_at > NOW() - INTERVAL '30 seconds'`,
           [sessionId, from, messageContent]
         );
 
@@ -302,14 +317,12 @@ class GoChatBot extends ActivityHandler {
           [sessionId, from, messageContent]
         );
 
-        // Push to visitor only if session is still active
-        if (session.rows[0].status === 'active' || session.rows[0].status === 'waiting') {
-          broadcastToSession(sessionId, {
-            type: 'agent_message',
-            content: messageContent,
-            senderName: from,
-          });
-        }
+        // Push to visitor
+        broadcastToSession(sessionId, {
+          type: 'agent_message',
+          content: messageContent,
+          senderName: from,
+        });
 
         console.log('Reply sent to visitor:', messageContent);
 
