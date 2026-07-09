@@ -458,7 +458,7 @@ function renderTable() {
       const init  = initials(s.visitor_name);
       const avCls = 'av-' + (hashStr(s.visitor_name)%8);
       const isLive = s.status==='active'||s.status==='waiting';
-      const phone = s.visitor_phone ? `<div class="tbl-phone">📞 ${esc(s.visitor_phone)}</div>` : '';
+      const phone = s.visitor_phone ? `<div class="tbl-phone"> ${esc(s.visitor_phone)}</div>` : '';
       return `<tr onclick="viewChat('${s.id}','${esc(s.visitor_name)}','${esc(s.visitor_email||'')}','${s.status}','${esc(s.visitor_phone||'')}')">
         <td>
           <div class="visitor-cell">
