@@ -70,21 +70,21 @@ app.get('/api/availability', async (req, res) => {
 
 // ── POST /api/sessions
 app.post('/api/sessions', async (req, res) => {
-  const { name, email, phone, firstMessage } = req.body;
+  const { name, email, firstMessage } = req.body;
   if (!name || !email || !firstMessage) {
     return res.status(400).json({ error: 'name, email and firstMessage are required' });
   }
   try {
     const sessionResult = await pool.query(
-      `INSERT INTO sessions (visitor_name, visitor_email, visitor_phone, status) VALUES ($1, $2, $3, 'waiting') RETURNING id`,
-      [name.trim(), email.trim().toLowerCase(), (phone || '').trim()]
+      `INSERT INTO sessions (visitor_name, visitor_email, status) VALUES ($1, $2, 'waiting') RETURNING id`,
+      [name.trim(), email.trim().toLowerCase()]
     );
     const sessionId = sessionResult.rows[0].id;
     await pool.query(
       `INSERT INTO messages (session_id, sender_type, sender_name, content) VALUES ($1, 'visitor', $2, $3)`,
       [sessionId, name.trim(), firstMessage.trim()]
     );
-    await postToTeams(sessionId, name.trim(), email.trim(), (phone || '').trim(), firstMessage.trim());
+    await postToTeams(sessionId, name.trim(), email.trim(), firstMessage.trim());
     res.json({ sessionId });
   } catch (err) {
     console.error(err);
@@ -130,9 +130,7 @@ app.post('/api/sessions/:id/messages', async (req, res) => {
 
   // ── Abuse filter
   const abuseWords = ['fuck', 'shit', 'bastard', 'bitch', 'asshole', 'damn', 'crap'];
-  const hasAbuse = abuseWords.some(word =>
-    content.toLowerCase().includes(word)
-  );
+  const hasAbuse = abuseWords.some(word => content.toLowerCase().includes(word));
   if (hasAbuse) {
     return res.status(400).json({ error: 'Your message contains inappropriate content. Please keep the conversation respectful.' });
   }
@@ -172,20 +170,20 @@ app.get('/api/sessions/:id/messages', async (req, res) => {
 
 // ── POST /api/leads
 app.post('/api/leads', async (req, res) => {
-  const { name, email, phone, message } = req.body;
+  const { name, email, message } = req.body;
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'name, email and message are required' });
   }
   try {
     await pool.query(
-      `INSERT INTO leads (name, email, phone, message) VALUES ($1, $2, $3, $4)`,
-      [name.trim(), email.trim().toLowerCase(), (phone || '').trim(), message.trim()]
+      `INSERT INTO leads (name, email, message) VALUES ($1, $2, $3)`,
+      [name.trim(), email.trim().toLowerCase(), message.trim()]
     );
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL,
       to: process.env.LEAD_NOTIFICATION_EMAIL,
       subject: `New lead from ${name.trim()} — GoChat`,
-      html: `<h2>New offline lead</h2><p><strong>Name:</strong> ${name.trim()}</p><p><strong>Email:</strong> ${email.trim()}</p><p><strong>Phone:</strong> ${(phone||'Not provided')}</p><p><strong>Message:</strong></p><blockquote>${message.trim()}</blockquote>`,
+      html: `<h2>New offline lead</h2><p><strong>Name:</strong> ${name.trim()}</p><p><strong>Email:</strong> ${email.trim()}</p><p><strong>Message:</strong></p><blockquote>${message.trim()}</blockquote>`,
     });
     res.json({ ok: true });
   } catch (err) {
@@ -204,12 +202,8 @@ app.post('/api/teams/claim', async (req, res) => {
       `UPDATE sessions SET status = 'active', claimed_by = $1, updated_at = NOW() WHERE id = $2 AND status = 'waiting' RETURNING *`,
       [agentName, sessionId]
     );
-    if (result.rows.length) {
-      broadcastToSession(sessionId, { type: 'agent_joined', agentName });
-    }
-  } catch (err) {
-    console.error(err);
-  }
+    if (result.rows.length) broadcastToSession(sessionId, { type: 'agent_joined', agentName });
+  } catch (err) { console.error(err); }
 });
 
 // ── POST /api/teams/thread
@@ -218,11 +212,8 @@ app.post('/api/teams/thread', async (req, res) => {
   if (!sessionId || !messageId) return res.status(400).json({ error: 'Missing data' });
   try {
     await pool.query('UPDATE sessions SET teams_thread_id = $1 WHERE id = $2', [messageId, sessionId]);
-    console.log('Saved Teams thread ID:', messageId, 'for session:', sessionId);
     res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Database error' });
-  }
+  } catch (err) { res.status(500).json({ error: 'Database error' }); }
 });
 
 // ── ADMIN ROUTES
@@ -238,9 +229,7 @@ app.get('/api/admin/sessions', adminAuth, async (req, res) => {
       `SELECT s.*, COUNT(m.id) as message_count FROM sessions s LEFT JOIN messages m ON m.session_id = s.id GROUP BY s.id ORDER BY s.created_at DESC LIMIT 100`
     );
     res.json({ sessions: result.rows });
-  } catch (err) {
-    res.status(500).json({ error: 'Database error' });
-  }
+  } catch (err) { res.status(500).json({ error: 'Database error' }); }
 });
 
 app.get('/api/admin/sessions/:id', adminAuth, async (req, res) => {
@@ -248,18 +237,14 @@ app.get('/api/admin/sessions/:id', adminAuth, async (req, res) => {
     const session = await pool.query('SELECT * FROM sessions WHERE id = $1', [req.params.id]);
     const messages = await pool.query('SELECT * FROM messages WHERE session_id = $1 ORDER BY created_at ASC', [req.params.id]);
     res.json({ session: session.rows[0], messages: messages.rows });
-  } catch (err) {
-    res.status(500).json({ error: 'Database error' });
-  }
+  } catch (err) { res.status(500).json({ error: 'Database error' }); }
 });
 
 app.get('/api/admin/leads', adminAuth, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM leads ORDER BY created_at DESC LIMIT 100');
     res.json({ leads: result.rows });
-  } catch (err) {
-    res.status(500).json({ error: 'Database error' });
-  }
+  } catch (err) { res.status(500).json({ error: 'Database error' }); }
 });
 
 app.post('/api/admin/reply', adminAuth, async (req, res) => {
@@ -295,9 +280,7 @@ app.post('/api/admin/close', adminAuth, async (req, res) => {
     await pool.query(`UPDATE sessions SET status = 'closed', closed_at = NOW(), updated_at = NOW() WHERE id = $1`, [sessionId]);
     broadcastToSession(sessionId, { type: 'session_closed' });
     res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to close session' });
-  }
+  } catch (err) { res.status(500).json({ error: 'Failed to close session' }); }
 });
 
 app.post('/api/admin/availability', adminAuth, async (req, res) => {
@@ -305,9 +288,7 @@ app.post('/api/admin/availability', adminAuth, async (req, res) => {
   try {
     await pool.query('UPDATE availability SET is_online = $1, updated_at = NOW() WHERE id = 1', [!!online]);
     res.json({ ok: true, online: !!online });
-  } catch (err) {
-    res.status(500).json({ error: 'Database error' });
-  }
+  } catch (err) { res.status(500).json({ error: 'Database error' }); }
 });
 
 app.get('/admin', (req, res) => {
@@ -340,7 +321,7 @@ app.post('/api/messages', async (req, res) => {
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
-// ── Bot Framework token (uses Goaco tenant ID)
+// ── Bot Framework token
 async function getBotToken() {
   const response = await axios.post(
     'https://login.microsoftonline.com/67b4ecd2-df5b-4b66-8d2b-1203e33c7302/oauth2/v2.0/token',
@@ -370,22 +351,20 @@ async function getGraphToken() {
   return response.data.access_token;
 }
 
-// ── Post to Teams (Bot Framework REST with webhook fallback)
-async function postToTeams(sessionId, name, email, phone, message) {
+// ── Post to Teams
+async function postToTeams(sessionId, name, email, message) {
   const serviceUrl = process.env.TEAMS_SERVICE_URL || 'https://smba.trafficmanager.net/uk/67b4ecd2-df5b-4b66-8d2b-1203e33c7302/';
   const channelId = process.env.TEAMS_CHANNEL_ID;
 
   const cardFacts = [
     { title: 'Name', value: name },
     { title: 'Email', value: email },
-    { title: 'Phone', value: phone || 'Not provided' },
     { title: 'Session ID', value: sessionId },
   ];
 
   if (channelId) {
     try {
       const token = await getBotToken();
-
       const createConvResponse = await axios.post(
         `${serviceUrl}v3/conversations`,
         {
@@ -414,22 +393,13 @@ async function postToTeams(sessionId, name, email, phone, message) {
 
       const conversationId = createConvResponse.data.id;
       const activityId = createConvResponse.data.activityId;
-
       console.log('Posted to Teams via Bot Framework ✅ conversationId:', conversationId);
-
-      const conversationRef = {
-        conversationId: conversationId,
-        activityId: activityId,
-        serviceUrl: serviceUrl,
-        botId: `28:${process.env.TEAMS_APP_ID}`,
-      };
 
       await pool.query(
         'UPDATE sessions SET teams_thread_id = $1, teams_conversation_ref = $2, teams_activity_id = $3 WHERE id = $4',
-        [conversationId, JSON.stringify(conversationRef), activityId, sessionId]
+        [conversationId, JSON.stringify({ conversationId, activityId, serviceUrl, botId: `28:${process.env.TEAMS_APP_ID}` }), activityId, sessionId]
       );
       return;
-
     } catch (err) {
       console.error('Bot Framework postToTeams error:', err.response?.data || err.message);
       console.log('Falling back to webhook...');
@@ -437,7 +407,7 @@ async function postToTeams(sessionId, name, email, phone, message) {
   }
 
   if (!process.env.TEAMS_WEBHOOK_URL) return;
-  const card = {
+  await axios.post(process.env.TEAMS_WEBHOOK_URL, {
     type: 'message',
     attachments: [{
       contentType: 'application/vnd.microsoft.card.adaptive',
@@ -452,13 +422,12 @@ async function postToTeams(sessionId, name, email, phone, message) {
         ],
       },
     }],
-  };
-  await axios.post(process.env.TEAMS_WEBHOOK_URL, card)
-    .then(() => console.log('Posted to Teams via webhook ✅'))
-    .catch(err => console.error('Webhook error:', err.message));
+  })
+  .then(() => console.log('Posted to Teams via webhook ✅'))
+  .catch(err => console.error('Webhook error:', err.message));
 }
 
-// ── Reply to Teams thread (Bot Framework REST with webhook fallback)
+// ── Reply to Teams thread
 async function replyToTeamsThread(session, message, senderName) {
   console.log('Sending visitor follow-up to Teams:', message);
 
@@ -469,7 +438,7 @@ async function replyToTeamsThread(session, message, senderName) {
     body: [
       { type: 'TextBlock', text: `💬 ${senderName} (visitor)`, weight: 'Bolder', color: 'Accent' },
       { type: 'TextBlock', text: message, wrap: true },
-      { type: 'TextBlock', text: session.claimed_by ? `Claimed by: ${session.claimed_by} | @GoChat <your reply>` : `To reply: @GoChat ${session.id} <your message>`, wrap: true, isSubtle: true, size: 'Small' },
+      { type: 'TextBlock', text: session.claimed_by ? `Claimed by: ${session.claimed_by}` : `To reply: @GoChat ${session.id} <your message>`, wrap: true, isSubtle: true, size: 'Small' },
     ],
   };
 
@@ -480,58 +449,25 @@ async function replyToTeamsThread(session, message, senderName) {
       const fullConversationId = ref.conversation?.id || session.teams_thread_id;
       const conversationId = fullConversationId.split(';messageid=')[0];
       const activityId = session.teams_activity_id;
-
-      console.log('Using Bot Framework REST conversationId:', conversationId, 'activityId:', activityId);
-
       const token = await getBotToken();
-
-      const threadConversationId = activityId
-        ? `${conversationId};messageid=${activityId}`
-        : conversationId;
-
-      const url = `${serviceUrl}v3/conversations/${encodeURIComponent(threadConversationId)}/activities`;
-
+      const threadConversationId = activityId ? `${conversationId};messageid=${activityId}` : conversationId;
       await axios.post(
-        url,
-        {
-          type: 'message',
-          attachments: [{
-            contentType: 'application/vnd.microsoft.card.adaptive',
-            content: adaptiveCard,
-          }],
-        },
+        `${serviceUrl}v3/conversations/${encodeURIComponent(threadConversationId)}/activities`,
+        { type: 'message', attachments: [{ contentType: 'application/vnd.microsoft.card.adaptive', content: adaptiveCard }] },
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );
-
       console.log('Visitor follow-up sent via Bot Framework REST ✅');
       return;
-
     } catch (err) {
       console.error('Bot Framework REST error:', err.response?.data || err.message);
-      console.log('Falling back to webhook...');
     }
   }
 
   if (!process.env.TEAMS_WEBHOOK_URL) return;
-  const card = {
+  await axios.post(process.env.TEAMS_WEBHOOK_URL, {
     type: 'message',
-    attachments: [{
-      contentType: 'application/vnd.microsoft.card.adaptive',
-      content: {
-        $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
-        type: 'AdaptiveCard',
-        version: '1.4',
-        body: [
-          { type: 'TextBlock', text: `💬 ${senderName} (visitor)`, weight: 'Bolder', color: 'Accent' },
-          { type: 'TextBlock', text: message, wrap: true },
-          { type: 'TextBlock', text: session.claimed_by ? `Claimed by: ${session.claimed_by} | @GoChat <your reply>` : `To reply: @GoChat ${session.id} <your message>`, wrap: true, isSubtle: true, size: 'Small' },
-        ],
-      },
-    }],
-  };
-  await axios.post(process.env.TEAMS_WEBHOOK_URL, card)
-    .then(() => console.log('Visitor follow-up sent via webhook ✅'))
-    .catch(err => console.error('Webhook error:', err.message));
+    attachments: [{ contentType: 'application/vnd.microsoft.card.adaptive', content: adaptiveCard }],
+  }).catch(err => console.error('Webhook error:', err.message));
 }
 
 function extractSessionFromText(text) {
@@ -541,3 +477,25 @@ function extractSessionFromText(text) {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`GoChat server running on port ${PORT}`));
+
+// ── Auto-release idle claimed sessions (every 2 minutes)
+const AUTO_RELEASE_MINUTES = 10;
+setInterval(async () => {
+  try {
+    const result = await pool.query(`
+      UPDATE sessions
+      SET status = 'waiting', claimed_by = NULL, updated_at = NOW()
+      WHERE status = 'active'
+      AND updated_at < NOW() - INTERVAL '${AUTO_RELEASE_MINUTES} minutes'
+      RETURNING id, visitor_name, claimed_by
+    `);
+    if (result.rows.length > 0) {
+      result.rows.forEach(session => {
+        console.log('Auto-released idle session:', session.id);
+        broadcastToSession(session.id, { type: 'agent_left' });
+      });
+    }
+  } catch (err) {
+    console.error('Auto-release error:', err.message);
+  }
+}, 2 * 60 * 1000);
