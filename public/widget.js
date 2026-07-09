@@ -249,7 +249,7 @@
       <!-- Offline form -->
       <div id="gc-offline" style="display:none">
         <div id="gc-welcome-msg" style="border-left-color:#f59e0b;background:#fffbeb">
-          <p style="color:#92400e">⏰ We're currently offline. Leave your details and we'll get back to you soon.</p>
+          <p style="color:#92400e">We're currently offline. Leave your details and we'll get back to you soon.</p>
         </div>
         <div id="gc-offline-fields">
         <input id="gc-off-name" class="gc-offline-input" type="text" placeholder="Full name" required> 
@@ -258,7 +258,7 @@
             <input id="gc-off-email" class="gc-offline-input" type="email" placeholder="Email address" required>
           </div>
           <div>
-            <label class="gc-field-label">Your enquiry</label>
+           
             <textarea id="gc-off-msg" class="gc-offline-input" rows="3" placeholder="Tell us how we can help..."></textarea>
           </div>
           <button id="gc-off-send">📩 Send enquiry</button>
