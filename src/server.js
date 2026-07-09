@@ -70,21 +70,21 @@ app.get('/api/availability', async (req, res) => {
 
 // ── POST /api/sessions
 app.post('/api/sessions', async (req, res) => {
-  const { name, email, firstMessage } = req.body;
+  const { name, email, phone, firstMessage } = req.body;
   if (!name || !email || !firstMessage) {
     return res.status(400).json({ error: 'name, email and firstMessage are required' });
   }
   try {
     const sessionResult = await pool.query(
-      `INSERT INTO sessions (visitor_name, visitor_email, status) VALUES ($1, $2, 'waiting') RETURNING id`,
-      [name.trim(), email.trim().toLowerCase()]
+      `INSERT INTO sessions (visitor_name, visitor_email, visitor_phone, status) VALUES ($1, $2, $3, 'waiting') RETURNING id`,
+      [name.trim(), email.trim().toLowerCase(), (phone || '').trim()]
     );
     const sessionId = sessionResult.rows[0].id;
     await pool.query(
       `INSERT INTO messages (session_id, sender_type, sender_name, content) VALUES ($1, 'visitor', $2, $3)`,
       [sessionId, name.trim(), firstMessage.trim()]
     );
-    await postToTeams(sessionId, name.trim(), email.trim(), firstMessage.trim());
+    await postToTeams(sessionId, name.trim(), email.trim(), (phone || '').trim(), firstMessage.trim());
     res.json({ sessionId });
   } catch (err) {
     console.error(err);
@@ -159,20 +159,20 @@ app.get('/api/sessions/:id/messages', async (req, res) => {
 
 // ── POST /api/leads
 app.post('/api/leads', async (req, res) => {
-  const { name, email, message } = req.body;
+  const { name, email, phone, message } = req.body;
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'name, email and message are required' });
   }
   try {
     await pool.query(
-      `INSERT INTO leads (name, email, message) VALUES ($1, $2, $3)`,
-      [name.trim(), email.trim().toLowerCase(), message.trim()]
+      `INSERT INTO leads (name, email, phone, message) VALUES ($1, $2, $3, $4)`,
+      [name.trim(), email.trim().toLowerCase(), (phone || '').trim(), message.trim()]
     );
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL,
       to: process.env.LEAD_NOTIFICATION_EMAIL,
       subject: `New lead from ${name.trim()} — GoChat`,
-      html: `<h2>New offline lead</h2><p><strong>Name:</strong> ${name.trim()}</p><p><strong>Email:</strong> ${email.trim()}</p><p><strong>Message:</strong></p><blockquote>${message.trim()}</blockquote>`,
+      html: `<h2>New offline lead</h2><p><strong>Name:</strong> ${name.trim()}</p><p><strong>Email:</strong> ${email.trim()}</p><p><strong>Phone:</strong> ${(phone||'Not provided')}</p><p><strong>Message:</strong></p><blockquote>${message.trim()}</blockquote>`,
     });
     res.json({ ok: true });
   } catch (err) {
@@ -358,9 +358,16 @@ async function getGraphToken() {
 }
 
 // ── Post to Teams (Bot Framework REST with webhook fallback)
-async function postToTeams(sessionId, name, email, message) {
+async function postToTeams(sessionId, name, email, phone, message) {
   const serviceUrl = process.env.TEAMS_SERVICE_URL || 'https://smba.trafficmanager.net/uk/67b4ecd2-df5b-4b66-8d2b-1203e33c7302/';
   const channelId = process.env.TEAMS_CHANNEL_ID;
+
+  const cardFacts = [
+    { title: 'Name', value: name },
+    { title: 'Email', value: email },
+    { title: 'Phone', value: phone || 'Not provided' },
+    { title: 'Session ID', value: sessionId },
+  ];
 
   if (channelId) {
     try {
@@ -381,13 +388,8 @@ async function postToTeams(sessionId, name, email, message) {
                 version: '1.4',
                 body: [
                   { type: 'TextBlock', text: '💬 New chat from website visitor', weight: 'Bolder', size: 'Medium', color: 'Accent' },
-                  { type: 'FactSet', facts: [
-                    { title: 'Name', value: name },
-                    { title: 'Email', value: email },
-                    { title: 'Session ID', value: sessionId },
-                  ]},
+                  { type: 'FactSet', facts: cardFacts },
                   { type: 'TextBlock', text: `"${message}"`, wrap: true, isSubtle: true },
-                  { type: 'TextBlock', text: `To reply: @GoChat ${sessionId} <your message>`, wrap: true, color: 'Accent', size: 'Small' },
                 ],
               },
             }],
@@ -432,13 +434,8 @@ async function postToTeams(sessionId, name, email, message) {
         version: '1.4',
         body: [
           { type: 'TextBlock', text: '💬 New chat from website visitor', weight: 'Bolder', size: 'Medium', color: 'Accent' },
-          { type: 'FactSet', facts: [
-            { title: 'Name', value: name },
-            { title: 'Email', value: email },
-            { title: 'Session ID', value: sessionId },
-          ]},
+          { type: 'FactSet', facts: cardFacts },
           { type: 'TextBlock', text: `"${message}"`, wrap: true, isSubtle: true },
-          { type: 'TextBlock', text: `To reply: @GoChat ${sessionId} <your message>`, wrap: true, color: 'Accent', size: 'Small' },
         ],
       },
     }],
@@ -475,7 +472,6 @@ async function replyToTeamsThread(session, message, senderName) {
 
       const token = await getBotToken();
 
-      // Post as reply in the same thread
       const threadConversationId = activityId
         ? `${conversationId};messageid=${activityId}`
         : conversationId;
