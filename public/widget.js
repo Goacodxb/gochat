@@ -37,7 +37,7 @@
       box-shadow: 0 8px 40px rgba(0,0,0,0.18);
       display: none; flex-direction: column; overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      max-height: 580px; border: 1px solid #1e3a5f;
+      max-height: 560px; border: 1px solid #1e3a5f;
     }
     #gc-widget.open { display: flex; }
     #gc-header {
@@ -81,22 +81,6 @@
       box-shadow: 0 0 0 2px rgba(15,29,58,0.1);
     }
     #gc-form input.gc-input-error, #gc-form textarea.gc-input-error { border-color: #dc2626; }
-    .gc-phone-row { display: flex; gap: 6px; }
-    .gc-phone-code {
-      width: 110px; flex-shrink: 0; padding: 9px 8px; border: 1px solid #e5e7eb;
-      border-radius: 6px; font-size: 13px; font-family: inherit;
-      color: #111827; background: white; box-sizing: border-box;
-    }
-    .gc-phone-code:focus { outline: none; border-color: #0f1d3a; }
-    .gc-phone-code.gc-input-error { border-color: #dc2626; }
-    .gc-phone-num {
-      flex: 1; padding: 9px 12px; border: 1px solid #e5e7eb;
-      border-radius: 6px; font-size: 13px; font-family: inherit;
-      color: #111827; box-sizing: border-box;
-    }
-    .gc-phone-num:focus { outline: none; border-color: #0f1d3a; }
-    .gc-phone-num.gc-input-error { border-color: #dc2626; }
-    .gc-offline-input.gc-input-error { border-color: #dc2626; }
     #gc-send {
       padding: 11px; background: #0f1d3a; color: white; border: none;
       border-radius: 8px; font-size: 14px; font-weight: 600;
@@ -162,7 +146,7 @@
       border-radius: 8px; font-size: 12px; color: #0f1d3a;
       cursor: pointer; margin-top: 2px;
     }
-    #gc-visitor-end-btn:hover { background: #0f1d3a; color: #ffffff; border-color: #0f1d3a; }
+    #gc-visitor-end-btn:hover { background: #0f1d3a; color: #ffffff; }
     #gc-offline-fields { display: flex; flex-direction: column; gap: 10px; }
     .gc-offline-input {
       width: 100%; padding: 9px 12px; border: 1px solid #e5e7eb;
@@ -170,6 +154,7 @@
       box-sizing: border-box; color: #111827;
     }
     .gc-offline-input:focus { outline: none; border-color: #0f1d3a; }
+    .gc-offline-input.gc-input-error { border-color: #dc2626; }
     #gc-off-send {
       padding: 11px; background: #0f1d3a; color: white;
       border: none; border-radius: 8px; font-size: 14px;
@@ -232,28 +217,6 @@
             <p id="gc-email-error" class="gc-field-error">Please enter a valid email address.</p>
           </div>
           <div>
-            <div class="gc-phone-row">
-              <select id="gc-phone-code" class="gc-phone-code">
-                <option value="+971">🇦🇪 +971</option>
-                <option value="+91">🇮🇳 +91</option>
-                <option value="+44">🇬🇧 +44</option>
-                <option value="+1">🇺🇸 +1</option>
-                <option value="+92">🇵🇰 +92</option>
-                <option value="+966">🇸🇦 +966</option>
-                <option value="+974">🇶🇦 +974</option>
-                <option value="+973">🇧🇭 +973</option>
-                <option value="+968">🇴🇲 +968</option>
-                <option value="+965">🇰🇼 +965</option>
-                <option value="+20">🇪🇬 +20</option>
-                <option value="+49">🇩🇪 +49</option>
-                <option value="+33">🇫🇷 +33</option>
-                <option value="+61">🇦🇺 +61</option>
-              </select>
-              <input id="gc-phone" class="gc-phone-num" type="tel" placeholder="Phone number" required>
-            </div>
-            <p id="gc-phone-error" class="gc-field-error">Please enter your phone number.</p>
-          </div>
-          <div>
             <textarea id="gc-first-msg" rows="3" placeholder="Tell us about your enquiry..."></textarea>
             <p id="gc-msg-error" class="gc-field-error">Please describe your enquiry.</p>
           </div>
@@ -290,28 +253,6 @@
           <div>
             <input id="gc-off-email" class="gc-offline-input" type="email" placeholder="Email address" required>
             <p id="gc-off-email-error" class="gc-offline-error">Please enter a valid email address.</p>
-          </div>
-          <div>
-            <div class="gc-phone-row">
-              <select id="gc-off-phone-code" class="gc-phone-code">
-                <option value="+971">🇦🇪 +971</option>
-                <option value="+91">🇮🇳 +91</option>
-                <option value="+44">🇬🇧 +44</option>
-                <option value="+1">🇺🇸 +1</option>
-                <option value="+92">🇵🇰 +92</option>
-                <option value="+966">🇸🇦 +966</option>
-                <option value="+974">🇶🇦 +974</option>
-                <option value="+973">🇧🇭 +973</option>
-                <option value="+968">🇴🇲 +968</option>
-                <option value="+965">🇰🇼 +965</option>
-                <option value="+20">🇪🇬 +20</option>
-                <option value="+49">🇩🇪 +49</option>
-                <option value="+33">🇫🇷 +33</option>
-                <option value="+61">🇦🇺 +61</option>
-              </select>
-              <input id="gc-off-phone" class="gc-phone-num" type="tel" placeholder="Phone number" required>
-            </div>
-            <p id="gc-off-phone-error" class="gc-offline-error">Please enter your phone number.</p>
           </div>
           <div>
             <textarea id="gc-off-msg" class="gc-offline-input" rows="3" placeholder="Tell us how we can help..."></textarea>
@@ -408,7 +349,7 @@
     var msg   = document.getElementById('gc-first-msg').value.trim();
 
     document.querySelectorAll('.gc-field-error').forEach(function (el) { el.style.display = 'none'; });
-    ['gc-name','gc-email','gc-phone','gc-first-msg'].forEach(function(id) {
+    ['gc-name', 'gc-email', 'gc-first-msg'].forEach(function(id) {
       document.getElementById(id).classList.remove('gc-input-error');
     });
 
@@ -424,20 +365,6 @@
       document.getElementById('gc-email').classList.add('gc-input-error');
       hasError = true;
     }
-    var phoneCode = document.getElementById('gc-phone-code').value;
-    var phoneNum  = document.getElementById('gc-phone').value.trim();
-    var phoneError = validatePhone(phoneCode, phoneNum);
-    if (!phoneNum) {
-      document.getElementById('gc-phone-error').textContent = 'Please enter your phone number.';
-      document.getElementById('gc-phone-error').style.display = 'block';
-      document.getElementById('gc-phone').classList.add('gc-input-error');
-      hasError = true;
-    } else if (phoneError) {
-      document.getElementById('gc-phone-error').textContent = phoneError;
-      document.getElementById('gc-phone-error').style.display = 'block';
-      document.getElementById('gc-phone').classList.add('gc-input-error');
-      hasError = true;
-    }
     if (!msg) {
       document.getElementById('gc-msg-error').style.display = 'block';
       document.getElementById('gc-first-msg').classList.add('gc-input-error');
@@ -445,7 +372,6 @@
     }
     if (hasError) return;
 
-    var phone = phoneCode + phoneNum;
     visitorName = name;
     var btn = document.getElementById('gc-send');
     btn.disabled = true;
@@ -454,7 +380,7 @@
     fetch(BACKEND_URL + '/api/sessions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, email: email, phone: phone, firstMessage: msg }),
+      body: JSON.stringify({ name: name, email: email, firstMessage: msg }),
     })
       .then(function (r) { return r.json(); })
       .then(function (d) {
@@ -489,6 +415,16 @@
     document.getElementById('gc-status-text').textContent = 'Connected with ' + agentName;
     document.getElementById('gc-chat-input').classList.add('active');
     document.getElementById('gc-msg-input').focus();
+  }
+
+  // ── Agent left (auto-release) ──────────────────────────
+  function onAgentLeft() {
+    agentJoined = false;
+    document.getElementById('gc-chat-input').classList.remove('active');
+    document.getElementById('gc-waiting-box').style.display = 'block';
+    document.getElementById('gc-status-dot').style.background = '#f59e0b';
+    document.getElementById('gc-status-text').textContent = 'Waiting for an agent...';
+    addSystemMessage('⏳ Agent disconnected. Please wait while we connect you to another agent...');
   }
 
   // ── Session closed ─────────────────────────────────────
@@ -556,6 +492,8 @@
           document.getElementById('gc-chat-status').textContent = '';
         } else if (data.type === 'agent_joined') {
           onAgentJoined(data.agentName || 'Agent');
+        } else if (data.type === 'agent_left') {
+          onAgentLeft();
         } else if (data.type === 'session_closed') {
           onSessionClosed();
         }
@@ -571,16 +509,15 @@
     messagePoller = setInterval(function () {
       if (!sessionId || wsConnected) return;
 
-      // ── Check if session was closed from Teams side ──
+      // Check session status
       fetch(BACKEND_URL + '/api/sessions/' + sessionId + '/status')
         .then(function(r) { return r.json(); })
         .then(function(d) {
-          if (d.status === 'closed' && !sessionClosed) {
-            onSessionClosed();
-          }
+          if (d.status === 'closed' && !sessionClosed) onSessionClosed();
+          if (d.status === 'waiting' && agentJoined) onAgentLeft();
         }).catch(console.error);
 
-      // ── Fetch new messages ──
+      // Fetch new messages
       fetch(BACKEND_URL + '/api/sessions/' + sessionId + '/messages?since=' + encodeURIComponent(lastMessageTime))
         .then(function (r) { return r.json(); })
         .then(function (d) {
@@ -624,12 +561,9 @@
     var name  = document.getElementById('gc-off-name').value.trim();
     var email = document.getElementById('gc-off-email').value.trim();
     var msg   = document.getElementById('gc-off-msg').value.trim();
-    var offPhoneCode = document.getElementById('gc-off-phone-code').value;
-    var offPhoneNum  = document.getElementById('gc-off-phone').value.trim();
-    var phone = offPhoneCode + offPhoneNum;
 
     document.querySelectorAll('.gc-offline-error').forEach(function(el) { el.style.display = 'none'; });
-    ['gc-off-name','gc-off-email','gc-off-phone','gc-off-msg'].forEach(function(id) {
+    ['gc-off-name','gc-off-email','gc-off-msg'].forEach(function(id) {
       document.getElementById(id).classList.remove('gc-input-error');
     });
 
@@ -643,18 +577,6 @@
       document.getElementById('gc-off-email-error').textContent = !email ? 'Please enter your email address.' : 'Please enter a valid email address.';
       document.getElementById('gc-off-email-error').style.display = 'block';
       document.getElementById('gc-off-email').classList.add('gc-input-error');
-      hasError = true;
-    }
-    var offPhoneError = validatePhone(offPhoneCode, offPhoneNum);
-    if (!offPhoneNum) {
-      document.getElementById('gc-off-phone-error').textContent = 'Please enter your phone number.';
-      document.getElementById('gc-off-phone-error').style.display = 'block';
-      document.getElementById('gc-off-phone').classList.add('gc-input-error');
-      hasError = true;
-    } else if (offPhoneError) {
-      document.getElementById('gc-off-phone-error').textContent = offPhoneError;
-      document.getElementById('gc-off-phone-error').style.display = 'block';
-      document.getElementById('gc-off-phone').classList.add('gc-input-error');
       hasError = true;
     }
     if (!msg) {
@@ -671,7 +593,7 @@
     fetch(BACKEND_URL + '/api/leads', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, email: email, phone: phone, message: msg }),
+      body: JSON.stringify({ name: name, email: email, message: msg }),
     })
       .then(function () {
         document.getElementById('gc-offline-fields').style.display = 'none';
@@ -687,37 +609,6 @@
 
   function escHtml(str) {
     return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-
-  // ── Phone validation by country code ──────────────────
-  function validatePhone(code, number) {
-    var rules = {
-      '+971': { min: 9,  max: 9,  hint: '9 digits (e.g. 501234567)' },
-      '+91':  { min: 10, max: 10, hint: '10 digits (e.g. 9876543210)' },
-      '+44':  { min: 10, max: 10, hint: '10 digits (e.g. 7911123456)' },
-      '+1':   { min: 10, max: 10, hint: '10 digits (e.g. 2025551234)' },
-      '+92':  { min: 10, max: 10, hint: '10 digits (e.g. 3001234567)' },
-      '+966': { min: 9,  max: 9,  hint: '9 digits (e.g. 512345678)' },
-      '+974': { min: 8,  max: 8,  hint: '8 digits (e.g. 33123456)' },
-      '+973': { min: 8,  max: 8,  hint: '8 digits (e.g. 36001234)' },
-      '+968': { min: 8,  max: 8,  hint: '8 digits (e.g. 92345678)' },
-      '+965': { min: 8,  max: 8,  hint: '8 digits (e.g. 51234567)' },
-      '+20':  { min: 10, max: 10, hint: '10 digits (e.g. 1012345678)' },
-      '+49':  { min: 10, max: 11, hint: '10-11 digits' },
-      '+33':  { min: 9,  max: 9,  hint: '9 digits (e.g. 612345678)' },
-      '+61':  { min: 9,  max: 9,  hint: '9 digits (e.g. 412345678)' },
-    };
-    var n = number.replace(/\s/g, '');
-    if (!/^[0-9]+$/.test(n)) return 'Please enter digits only.';
-    var rule = rules[code];
-    if (!rule) {
-      if (n.length < 5 || n.length > 15) return 'Please enter a valid phone number.';
-      return null;
-    }
-    if (n.length < rule.min || n.length > rule.max) {
-      return 'Invalid number for ' + code + '. Expected ' + rule.hint + '.';
-    }
-    return null;
   }
 
 })();
