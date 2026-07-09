@@ -214,16 +214,15 @@ class GoChatBot extends ActivityHandler {
         // Claim if waiting — use atomic update to prevent race conditions
         if (previousStatus === 'waiting') {
           const claimResult = await pool.query(
-            `UPDATE sessions SET status='active', claimed_by=$1, updated_at=NOW() 
-             WHERE id=$2 AND status='waiting' RETURNING *`,
-            [from, sessionId]
+            `UPDATE sessions SET status='active', claimed_by=$1, claimed_by_id=$2, updated_at=NOW() 
+             WHERE id=$3 AND status='waiting' RETURNING *`,
+            [from, context.activity.from?.id || '', sessionId]
           );
           if (claimResult.rows.length > 0) {
             broadcastToSession(sessionId, { type: 'agent_joined', agentName: from });
-            console.log('Session claimed by:', from);
+            console.log('Session claimed by:', from, 'id:', context.activity.from?.id);
             justClaimed = true;
           } else {
-            // Another agent claimed it between our read and write
             const updated = await pool.query('SELECT claimed_by FROM sessions WHERE id = $1', [sessionId]);
             const claimer = updated.rows[0]?.claimed_by || 'another agent';
             await postToThread(teamsConversationId, messageId,
