@@ -37,7 +37,7 @@
       box-shadow: 0 8px 40px rgba(0,0,0,0.18);
       display: none; flex-direction: column; overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      max-height: 560px; border: 1px solid #1e3a5f;
+      max-height: 580px; border: 1px solid #1e3a5f;
     }
     #gc-widget.open { display: flex; }
     #gc-header {
@@ -56,27 +56,20 @@
     #gc-header-status { font-size: 11px; margin: 3px 0 0; display: flex; align-items: center; gap: 4px; }
     #gc-status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
     #gc-header-actions { display: flex; align-items: center; gap: 8px; }
-    #gc-end-chat-btn {
-      background: #dc2626; border: none; color: white;
-      font-size: 11px; cursor: pointer; padding: 4px 8px;
-      border-radius: 4px; font-weight: 600; display: none;
-    }
-    #gc-end-chat-btn:hover { background: #b91c1c; }
     #gc-close {
       background: none; border: none; color: #94a3b8;
       font-size: 20px; cursor: pointer; padding: 0; line-height: 1;
     }
     #gc-close:hover { color: white; }
     #gc-body { padding: 16px; flex: 1; overflow-y: auto; }
-    #gc-welcome-msg {
-      border-radius: 8px 8px 8px 8px; padding: 10px 0px; margin-bottom: 14px;
-    }
+    #gc-welcome-msg { border-radius: 8px; padding: 10px 0; margin-bottom: 14px; }
     #gc-welcome-msg p { font-size: 13px; color: #0f1d3a; margin: 0; }
     .gc-field-label {
       font-size: 11px; color: #6b7280; font-weight: 600;
       display: block; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.3px;
     }
     .gc-field-error { color: #dc2626; font-size: 12px; margin: 4px 0 0 2px; display: none; }
+    .gc-offline-error { color: #dc2626; font-size: 12px; margin: 4px 0 0 2px; display: none; }
     #gc-form { display: flex; flex-direction: column; gap: 10px; }
     #gc-form input, #gc-form textarea {
       width: 100%; padding: 9px 12px; border: 1px solid #e5e7eb;
@@ -88,6 +81,7 @@
       box-shadow: 0 0 0 2px rgba(15,29,58,0.1);
     }
     #gc-form input.gc-input-error, #gc-form textarea.gc-input-error { border-color: #dc2626; }
+    .gc-offline-input.gc-input-error { border-color: #dc2626; }
     #gc-send {
       padding: 11px; background: #0f1d3a; color: white; border: none;
       border-radius: 8px; font-size: 14px; font-weight: 600;
@@ -131,7 +125,7 @@
       display: none; background: #0f1d3a; border: 1px solid #69727d;
       border-radius: 8px; padding: 16px; text-align: center; margin-top: 8px;
     }
-    #gc-ended-box p { font-size: 13px; color: #ffffff;; margin: 0; }
+    #gc-ended-box p { font-size: 13px; color: #ffffff; margin: 0; }
     #gc-chat-input {
       display: none; gap: 8px; padding: 10px 16px 14px;
       border-top: 1px solid #f3f4f6; flex-direction: column;
@@ -147,13 +141,13 @@
       padding: 9px 14px; background: #0f1d3a; color: white;
       border: none; border-radius: 8px; cursor: pointer; font-size: 16px;
     }
-    #gc-chat-send:hover { background: #0f1d3a;; }
+    #gc-chat-send:hover { background: #1a2f5a; }
     #gc-visitor-end-btn {
-      width: 100%; padding: 8px; background: none; border: 1px solid #0f1d3a;;
-      border-radius: 8px; font-size: 12px; color:#0f1d3a;;
+      width: 100%; padding: 8px; background: none; border: 1px solid #0f1d3a;
+      border-radius: 8px; font-size: 12px; color: #0f1d3a;
       cursor: pointer; margin-top: 2px;
     }
-    #gc-visitor-end-btn:hover { background: #fef2f2; color: #ffffff; border-color: ##0f1d3a;; }
+    #gc-visitor-end-btn:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
     #gc-offline-fields { display: flex; flex-direction: column; gap: 10px; }
     .gc-offline-input {
       width: 100%; padding: 9px 12px; border: 1px solid #e5e7eb;
@@ -208,7 +202,7 @@
     </div>
     <div id="gc-body">
 
-      <!-- Pre-chat form -->
+      <!-- Pre-chat form (Online) -->
       <div id="gc-prechat">
         <div id="gc-welcome-msg">
           <p>👋 Hi! How can the GoIdentity team help you today?</p>
@@ -221,6 +215,10 @@
           <div>
             <input id="gc-email" type="email" placeholder="Email address" required>
             <p id="gc-email-error" class="gc-field-error">Please enter a valid email address.</p>
+          </div>
+          <div>
+            <input id="gc-phone" type="tel" placeholder="Phone number" required>
+            <p id="gc-phone-error" class="gc-field-error">Please enter your phone number.</p>
           </div>
           <div>
             <textarea id="gc-first-msg" rows="3" placeholder="Tell us about your enquiry..."></textarea>
@@ -249,23 +247,29 @@
       <!-- Offline form -->
       <div id="gc-offline" style="display:none">
         <div id="gc-welcome-msg" style="border-left-color:#f59e0b;background:#fffbeb;padding-left:10px">
-          <p style="color:#92400e">We're currently offline. Leave your details and we'll get back to you soon.</p>
+          <p style="color:#92400e">⏰ We're currently offline. Leave your details and we'll get back to you soon.</p>
         </div>
         <div id="gc-offline-fields">
-        <input id="gc-off-name" class="gc-offline-input" type="text" placeholder="Full name" required> 
           <div>
-           
-            <input id="gc-off-email" class="gc-offline-input" type="email" placeholder="Email address" required>
+            <input id="gc-off-name" class="gc-offline-input" type="text" placeholder="Full name" required>
+            <p id="gc-off-name-error" class="gc-offline-error">Please enter your name.</p>
           </div>
           <div>
-           
+            <input id="gc-off-email" class="gc-offline-input" type="email" placeholder="Email address" required>
+            <p id="gc-off-email-error" class="gc-offline-error">Please enter a valid email address.</p>
+          </div>
+          <div>
+            <input id="gc-off-phone" class="gc-offline-input" type="tel" placeholder="Phone number" required>
+            <p id="gc-off-phone-error" class="gc-offline-error">Please enter your phone number.</p>
+          </div>
+          <div>
             <textarea id="gc-off-msg" class="gc-offline-input" rows="3" placeholder="Tell us how we can help..."></textarea>
+            <p id="gc-off-msg-error" class="gc-offline-error">Please describe your enquiry.</p>
           </div>
           <button id="gc-off-send">📩 Send enquiry</button>
           <div style="font-size:11px;color:#9ca3af;text-align:center;margin-top:4px">🔒 Your information is secure and private</div>
         </div>
         <p id="gc-off-success">✅ Thanks! A member of our team will be in touch soon.</p>
-        <p id="gc-off-error" style="color:#dc2626;font-size:13px;margin-top:6px;display:none"></p>
       </div>
 
     </div>
@@ -302,7 +306,7 @@
     launcher.innerHTML = '💬';
   });
 
-  // ── End chat (from visitor button) ─────────────────────
+  // ── End chat ───────────────────────────────────────────
   document.getElementById('gc-visitor-end-btn').addEventListener('click', function () {
     if (!sessionId) return;
     if (!confirm('Are you sure you want to end this chat?')) return;
@@ -313,11 +317,7 @@
     fetch(BACKEND_URL + '/api/sessions/' + sessionId + '/end', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-    })
-    .then(function () {
-      onSessionClosed();
-    })
-    .catch(console.error);
+    }).then(function () { onSessionClosed(); }).catch(console.error);
   }
 
   // ── Availability ───────────────────────────────────────
@@ -350,16 +350,18 @@
   availabilityPoller = setInterval(checkAvailability, POLL_INTERVAL);
   checkAvailability();
 
-  // ── Start chat ─────────────────────────────────────────
+  // ── Start chat (Online) ────────────────────────────────
   document.getElementById('gc-send').addEventListener('click', function () {
-    var name = document.getElementById('gc-name').value.trim();
+    var name  = document.getElementById('gc-name').value.trim();
     var email = document.getElementById('gc-email').value.trim();
-    var msg = document.getElementById('gc-first-msg').value.trim();
+    var phone = document.getElementById('gc-phone').value.trim();
+    var msg   = document.getElementById('gc-first-msg').value.trim();
 
+    // Clear errors
     document.querySelectorAll('.gc-field-error').forEach(function (el) { el.style.display = 'none'; });
-    document.getElementById('gc-name').classList.remove('gc-input-error');
-    document.getElementById('gc-email').classList.remove('gc-input-error');
-    document.getElementById('gc-first-msg').classList.remove('gc-input-error');
+    ['gc-name','gc-email','gc-phone','gc-first-msg'].forEach(function(id) {
+      document.getElementById(id).classList.remove('gc-input-error');
+    });
 
     var hasError = false;
     if (!name) {
@@ -371,6 +373,11 @@
       document.getElementById('gc-email-error').textContent = !email ? 'Please enter your email address.' : 'Please enter a valid email address.';
       document.getElementById('gc-email-error').style.display = 'block';
       document.getElementById('gc-email').classList.add('gc-input-error');
+      hasError = true;
+    }
+    if (!phone) {
+      document.getElementById('gc-phone-error').style.display = 'block';
+      document.getElementById('gc-phone').classList.add('gc-input-error');
       hasError = true;
     }
     if (!msg) {
@@ -388,7 +395,7 @@
     fetch(BACKEND_URL + '/api/sessions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, email: email, firstMessage: msg }),
+      body: JSON.stringify({ name: name, email: email, phone: phone, firstMessage: msg }),
     })
       .then(function (r) { return r.json(); })
       .then(function (d) {
@@ -454,15 +461,12 @@
     .then(function(r) {
       if (!r.ok) {
         return r.json().then(function(d) {
-          // Show abuse error if content is inappropriate
           if (r.status === 400 && d.error && d.error.includes('inappropriate')) {
             abuseEl.style.display = 'block';
-            // Put message back in input
             input.value = content;
           }
         });
       }
-      // Message sent successfully — add to chat
       addMessage('visitor', visitorName, content);
     })
     .catch(console.error);
@@ -480,17 +484,12 @@
     if (!sessionId) return;
     var wsUrl = BACKEND_URL.replace(/^http/, 'ws') + '?sessionId=' + sessionId;
     ws = new WebSocket(wsUrl);
-
-    ws.onopen = function () {
-      wsConnected = true;
-      stopMessagePolling();
-    };
-
+    ws.onopen = function () { wsConnected = true; stopMessagePolling(); };
     ws.onmessage = function (e) {
       try {
         var data = JSON.parse(e.data);
         if (data.type === 'agent_message') {
-          if (sessionClosed) return; // ignore after session closed
+          if (sessionClosed) return;
           if (!agentJoined) onAgentJoined(data.senderName || 'Agent');
           addMessage('agent', data.senderName || 'Agent', data.content);
           lastMessageTime = new Date().toISOString();
@@ -499,8 +498,6 @@
           onAgentJoined(data.agentName || 'Agent');
         } else if (data.type === 'session_closed') {
           onSessionClosed();
-        } else if (data.type === 'visitor_message') {
-          // Already shown optimistically — skip
         }
       } catch (err) { console.error(err); }
     };
@@ -518,7 +515,7 @@
         .then(function (d) {
           (d.messages || []).forEach(function (m) {
             if (m.sender_type === 'agent') {
-              if (sessionClosed) return; // ignore after session closed
+              if (sessionClosed) return;
               if (!agentJoined) onAgentJoined(m.sender_name || 'Agent');
               addMessage('agent', m.sender_name, m.content);
               document.getElementById('gc-chat-status').textContent = '';
@@ -530,10 +527,7 @@
     }, MESSAGE_POLL);
   }
 
-  function stopMessagePolling() {
-    clearInterval(messagePoller);
-    messagePoller = null;
-  }
+  function stopMessagePolling() { clearInterval(messagePoller); messagePoller = null; }
 
   // ── Message bubbles ────────────────────────────────────
   function addMessage(type, name, content) {
@@ -556,23 +550,49 @@
 
   // ── Offline lead form ──────────────────────────────────
   document.getElementById('gc-off-send').addEventListener('click', function () {
-    var name = document.getElementById('gc-off-name').value.trim();
+    var name  = document.getElementById('gc-off-name').value.trim();
     var email = document.getElementById('gc-off-email').value.trim();
-    var msg = document.getElementById('gc-off-msg').value.trim();
-    var errEl = document.getElementById('gc-off-error');
-    if (!name || !email || !msg) {
-      errEl.textContent = 'Please fill in all fields.';
-      errEl.style.display = 'block';
-      return;
+    var phone = document.getElementById('gc-off-phone').value.trim();
+    var msg   = document.getElementById('gc-off-msg').value.trim();
+
+    // Clear all offline errors
+    document.querySelectorAll('.gc-offline-error').forEach(function(el) { el.style.display = 'none'; });
+    ['gc-off-name','gc-off-email','gc-off-phone','gc-off-msg'].forEach(function(id) {
+      document.getElementById(id).classList.remove('gc-input-error');
+    });
+
+    var hasError = false;
+    if (!name) {
+      document.getElementById('gc-off-name-error').style.display = 'block';
+      document.getElementById('gc-off-name').classList.add('gc-input-error');
+      hasError = true;
     }
-    errEl.style.display = 'none';
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      document.getElementById('gc-off-email-error').textContent = !email ? 'Please enter your email address.' : 'Please enter a valid email address.';
+      document.getElementById('gc-off-email-error').style.display = 'block';
+      document.getElementById('gc-off-email').classList.add('gc-input-error');
+      hasError = true;
+    }
+    if (!phone) {
+      document.getElementById('gc-off-phone-error').style.display = 'block';
+      document.getElementById('gc-off-phone').classList.add('gc-input-error');
+      hasError = true;
+    }
+    if (!msg) {
+      document.getElementById('gc-off-msg-error').style.display = 'block';
+      document.getElementById('gc-off-msg').classList.add('gc-input-error');
+      hasError = true;
+    }
+    if (hasError) return;
+
     var btn = document.getElementById('gc-off-send');
     btn.disabled = true;
     btn.textContent = 'Sending...';
+
     fetch(BACKEND_URL + '/api/leads', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, email: email, message: msg }),
+      body: JSON.stringify({ name: name, email: email, phone: phone, message: msg }),
     })
       .then(function () {
         document.getElementById('gc-offline-fields').style.display = 'none';
@@ -581,8 +601,8 @@
       .catch(function () {
         btn.disabled = false;
         btn.textContent = '📩 Send enquiry';
-        errEl.textContent = 'Something went wrong. Please try again.';
-        errEl.style.display = 'block';
+        document.getElementById('gc-off-name-error').textContent = 'Something went wrong. Please try again.';
+        document.getElementById('gc-off-name-error').style.display = 'block';
       });
   });
 
