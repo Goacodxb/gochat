@@ -92,6 +92,19 @@ app.post('/api/sessions', async (req, res) => {
   }
 });
 
+// ── GET /api/sessions/:id/status
+app.get('/api/sessions/:id/status', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query('SELECT status FROM sessions WHERE id = $1', [id]);
+    if (!result.rows.length) return res.status(404).json({ error: 'Session not found' });
+    res.json({ status: result.rows[0].status });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
 // ── POST /api/sessions/:id/end — visitor ends chat
 app.post('/api/sessions/:id/end', async (req, res) => {
   const { id } = req.params;
