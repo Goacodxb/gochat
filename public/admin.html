@@ -26,6 +26,15 @@
     <div class="login-title">Welcome back</div>
     <div class="login-sub">Sign in to your gochat dashboard</div>
     <div class="field-group">
+      <label class="field-label" for="agentNameInput">Your name</label>
+      <div class="field-wrap">
+        <span class="field-icon">👤</span>
+        <input class="field-input" type="text" id="agentNameInput"
+          placeholder="Enter your full name"
+          onkeydown="if(event.key==='Enter')login()">
+      </div>
+    </div>
+    <div class="field-group">
       <label class="field-label" for="secretInput">Admin password</label>
       <div class="field-wrap">
         <span class="field-icon">🔒</span>
@@ -284,7 +293,7 @@
 
 <script>
 // ── STATE ──
-let secret = '', availability = false;
+let secret = '', availability = false, agentName = '';
 let allSessions = [], allLeads = [], filtered = [];
 let curTab = 'sessions';
 let page = 1, pageSize = 10;
@@ -295,10 +304,11 @@ function closeSidebar() { document.getElementById('sidebar').classList.remove('o
 
 function logout() {
   if (!confirm('log out of gochat admin?')) return;
-  secret = ''; allSessions = []; allLeads = []; filtered = [];
+  secret = ''; agentName = ''; allSessions = []; allLeads = []; filtered = [];
   document.getElementById('appScreen').style.display   = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('secretInput').value = '';
+  document.getElementById('agentNameInput').value = '';
   document.getElementById('loginError').style.display = 'none';
   closeSidebar();
 }
@@ -320,17 +330,34 @@ function seedCharts(total, active, waiting, leads) {
 }
 
 function login() {
+  agentName = document.getElementById('agentNameInput').value.trim();
   secret = document.getElementById('secretInput').value;
+
+  if (!agentName) {
+    document.getElementById('loginError').textContent = 'Please enter your name.';
+    document.getElementById('loginError').style.display = 'block';
+    return;
+  }
+
   const btn = document.querySelector('.btn-signin');
   const txt = document.getElementById('signinText');
   btn.disabled = true; txt.textContent = 'signing in…';
   fetch('/api/admin/sessions', { headers: {'x-admin-secret': secret} })
     .then(r => {
       btn.disabled = false; txt.textContent = 'Sign in to dashboard';
-      if (r.status === 401) { document.getElementById('loginError').style.display = 'block'; return; }
+      if (r.status === 401) {
+        document.getElementById('loginError').textContent = 'Incorrect password. Please try again.';
+        document.getElementById('loginError').style.display = 'block';
+        return;
+      }
       document.getElementById('loginError').style.display = 'none';
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('appScreen').style.display   = 'block';
+
+      // Set agent name in sidebar
+      document.getElementById('sidebarAgentName').textContent   = agentName;
+      document.getElementById('sidebarAgentAvatar').textContent = initials(agentName);
+
       loadAll();
       setInterval(loadAll, 10000);
     })
@@ -417,11 +444,6 @@ function renderAgents() {
       <div class="agent-chats" style="color:${stats.active>0?'var(--green)':'var(--text-3)'}">${stats.active}</div>
     </div>
   `).join('');
-  const topAgent = entries[0];
-  if (topAgent) {
-    document.getElementById('sidebarAgentName').textContent    = topAgent[0];
-    document.getElementById('sidebarAgentAvatar').textContent  = initials(topAgent[0]);
-  }
 }
 
 function onGlobalSearch() { document.getElementById('tableSearch').value = document.getElementById('globalSearch').value; onTableSearch(); }
