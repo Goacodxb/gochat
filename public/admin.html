@@ -201,7 +201,7 @@
                     <th>status</th>
                     <th class="col-agent">agent</th>
                     <th class="col-date">started</th>
-                    <th></th>
+                    <th>message</th>
                   </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -494,11 +494,13 @@ function renderTable() {
         </div>
       </td>
       <td><span class="badge closed">offline lead</span></td>
-      <td class="col-agent" colspan="2"
-        style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2);font-size:12px">
-        ${esc(l.message)}
-      </td>
+      <td class="col-agent">—</td>
       <td class="tbl-date col-date">${formatDate(l.created_at)}</td>
+      <td>
+        <span style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2);font-size:12px;display:block">
+          ${esc(l.message)}
+        </span>
+      </td>
     </tr>`).join('');
   }
   renderPagination();
