@@ -426,7 +426,16 @@
       document.getElementById('gc-email').classList.add('gc-input-error');
       hasError = true;
     }
-    if (!document.getElementById('gc-phone').value.trim()) {
+    var phoneCode = document.getElementById('gc-phone-code').value;
+    var phoneNum = document.getElementById('gc-phone').value.trim();
+    var phoneError = validatePhone(phoneCode, phoneNum);
+    if (!phoneNum) {
+      document.getElementById('gc-phone-error').textContent = 'Please enter your phone number.';
+      document.getElementById('gc-phone-error').style.display = 'block';
+      document.getElementById('gc-phone').classList.add('gc-input-error');
+      hasError = true;
+    } else if (phoneError) {
+      document.getElementById('gc-phone-error').textContent = phoneError;
       document.getElementById('gc-phone-error').style.display = 'block';
       document.getElementById('gc-phone').classList.add('gc-input-error');
       hasError = true;
@@ -626,7 +635,16 @@
       document.getElementById('gc-off-email').classList.add('gc-input-error');
       hasError = true;
     }
-    if (!document.getElementById('gc-off-phone').value.trim()) {
+    var offPhoneCode = document.getElementById('gc-off-phone-code').value;
+    var offPhoneNum = document.getElementById('gc-off-phone').value.trim();
+    var offPhoneError = validatePhone(offPhoneCode, offPhoneNum);
+    if (!offPhoneNum) {
+      document.getElementById('gc-off-phone-error').textContent = 'Please enter your phone number.';
+      document.getElementById('gc-off-phone-error').style.display = 'block';
+      document.getElementById('gc-off-phone').classList.add('gc-input-error');
+      hasError = true;
+    } else if (offPhoneError) {
+      document.getElementById('gc-off-phone-error').textContent = offPhoneError;
       document.getElementById('gc-off-phone-error').style.display = 'block';
       document.getElementById('gc-off-phone').classList.add('gc-input-error');
       hasError = true;
@@ -661,6 +679,37 @@
 
   function escHtml(str) {
     return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // ── Phone validation by country code ──────────────────
+  function validatePhone(code, number) {
+    var rules = {
+      '+971': { min: 9, max: 9, hint: '9 digits (e.g. 501234567)' },       // UAE
+      '+91':  { min: 10, max: 10, hint: '10 digits (e.g. 9876543210)' },   // India
+      '+44':  { min: 10, max: 10, hint: '10 digits (e.g. 7911123456)' },   // UK
+      '+1':   { min: 10, max: 10, hint: '10 digits (e.g. 2025551234)' },   // USA
+      '+92':  { min: 10, max: 10, hint: '10 digits (e.g. 3001234567)' },   // Pakistan
+      '+966': { min: 9, max: 9, hint: '9 digits (e.g. 512345678)' },       // Saudi
+      '+974': { min: 8, max: 8, hint: '8 digits (e.g. 33123456)' },        // Qatar
+      '+973': { min: 8, max: 8, hint: '8 digits (e.g. 36001234)' },        // Bahrain
+      '+968': { min: 8, max: 8, hint: '8 digits (e.g. 92345678)' },        // Oman
+      '+965': { min: 8, max: 8, hint: '8 digits (e.g. 51234567)' },        // Kuwait
+      '+20':  { min: 10, max: 10, hint: '10 digits (e.g. 1012345678)' },   // Egypt
+      '+49':  { min: 10, max: 11, hint: '10-11 digits' },                   // Germany
+      '+33':  { min: 9, max: 9, hint: '9 digits (e.g. 612345678)' },       // France
+      '+61':  { min: 9, max: 9, hint: '9 digits (e.g. 412345678)' },       // Australia
+    };
+    var n = number.replace(/\s/g, '');
+    if (!/^[0-9]+$/.test(n)) return 'Please enter digits only.';
+    var rule = rules[code];
+    if (!rule) {
+      if (n.length < 5 || n.length > 15) return 'Please enter a valid phone number.';
+      return null;
+    }
+    if (n.length < rule.min || n.length > rule.max) {
+      return 'Invalid number for ' + code + '. Expected ' + rule.hint + '.';
+    }
+    return null;
   }
 
 })();
