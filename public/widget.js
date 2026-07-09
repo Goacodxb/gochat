@@ -81,6 +81,21 @@
       box-shadow: 0 0 0 2px rgba(15,29,58,0.1);
     }
     #gc-form input.gc-input-error, #gc-form textarea.gc-input-error { border-color: #dc2626; }
+    .gc-phone-row { display: flex; gap: 6px; }
+    .gc-phone-code {
+      width: 110px; flex-shrink: 0; padding: 9px 8px; border: 1px solid #e5e7eb;
+      border-radius: 6px; font-size: 13px; font-family: inherit;
+      color: #111827; background: white; box-sizing: border-box;
+    }
+    .gc-phone-code:focus { outline: none; border-color: #0f1d3a; }
+    .gc-phone-code.gc-input-error { border-color: #dc2626; }
+    .gc-phone-num {
+      flex: 1; padding: 9px 12px; border: 1px solid #e5e7eb;
+      border-radius: 6px; font-size: 13px; font-family: inherit;
+      color: #111827; box-sizing: border-box;
+    }
+    .gc-phone-num:focus { outline: none; border-color: #0f1d3a; }
+    .gc-phone-num.gc-input-error { border-color: #dc2626; }
     .gc-offline-input.gc-input-error { border-color: #dc2626; }
     #gc-send {
       padding: 11px; background: #0f1d3a; color: white; border: none;
@@ -217,7 +232,25 @@
             <p id="gc-email-error" class="gc-field-error">Please enter a valid email address.</p>
           </div>
           <div>
-            <input id="gc-phone" type="tel" placeholder="Phone number" required>
+            <div class="gc-phone-row">
+              <select id="gc-phone-code" class="gc-phone-code">
+                <option value="+971">🇦🇪 +971</option>
+                <option value="+91">🇮🇳 +91</option>
+                <option value="+44">🇬🇧 +44</option>
+                <option value="+1">🇺🇸 +1</option>
+                <option value="+92">🇵🇰 +92</option>
+                <option value="+966">🇸🇦 +966</option>
+                <option value="+974">🇶🇦 +974</option>
+                <option value="+973">🇧🇭 +973</option>
+                <option value="+968">🇴🇲 +968</option>
+                <option value="+965">🇰🇼 +965</option>
+                <option value="+20">🇪🇬 +20</option>
+                <option value="+49">🇩🇪 +49</option>
+                <option value="+33">🇫🇷 +33</option>
+                <option value="+61">🇦🇺 +61</option>
+              </select>
+              <input id="gc-phone" class="gc-phone-num" type="tel" placeholder="Phone number" required>
+            </div>
             <p id="gc-phone-error" class="gc-field-error">Please enter your phone number.</p>
           </div>
           <div>
@@ -259,7 +292,25 @@
             <p id="gc-off-email-error" class="gc-offline-error">Please enter a valid email address.</p>
           </div>
           <div>
-            <input id="gc-off-phone" class="gc-offline-input" type="tel" placeholder="Phone number" required>
+            <div class="gc-phone-row">
+              <select id="gc-off-phone-code" class="gc-phone-code">
+                <option value="+971">🇦🇪 +971</option>
+                <option value="+91">🇮🇳 +91</option>
+                <option value="+44">🇬🇧 +44</option>
+                <option value="+1">🇺🇸 +1</option>
+                <option value="+92">🇵🇰 +92</option>
+                <option value="+966">🇸🇦 +966</option>
+                <option value="+974">🇶🇦 +974</option>
+                <option value="+973">🇧🇭 +973</option>
+                <option value="+968">🇴🇲 +968</option>
+                <option value="+965">🇰🇼 +965</option>
+                <option value="+20">🇪🇬 +20</option>
+                <option value="+49">🇩🇪 +49</option>
+                <option value="+33">🇫🇷 +33</option>
+                <option value="+61">🇦🇺 +61</option>
+              </select>
+              <input id="gc-off-phone" class="gc-phone-num" type="tel" placeholder="Phone number" required>
+            </div>
             <p id="gc-off-phone-error" class="gc-offline-error">Please enter your phone number.</p>
           </div>
           <div>
@@ -354,7 +405,7 @@
   document.getElementById('gc-send').addEventListener('click', function () {
     var name  = document.getElementById('gc-name').value.trim();
     var email = document.getElementById('gc-email').value.trim();
-    var phone = document.getElementById('gc-phone').value.trim();
+    var phone = document.getElementById('gc-phone-code').value + document.getElementById('gc-phone').value.trim();
     var msg   = document.getElementById('gc-first-msg').value.trim();
 
     // Clear errors
@@ -375,7 +426,7 @@
       document.getElementById('gc-email').classList.add('gc-input-error');
       hasError = true;
     }
-    if (!phone) {
+    if (!document.getElementById('gc-phone').value.trim()) {
       document.getElementById('gc-phone-error').style.display = 'block';
       document.getElementById('gc-phone').classList.add('gc-input-error');
       hasError = true;
@@ -555,6 +606,8 @@
     var phone = document.getElementById('gc-off-phone').value.trim();
     var msg   = document.getElementById('gc-off-msg').value.trim();
 
+    var phone = document.getElementById('gc-off-phone-code').value + document.getElementById('gc-off-phone').value.trim();
+
     // Clear all offline errors
     document.querySelectorAll('.gc-offline-error').forEach(function(el) { el.style.display = 'none'; });
     ['gc-off-name','gc-off-email','gc-off-phone','gc-off-msg'].forEach(function(id) {
@@ -573,7 +626,7 @@
       document.getElementById('gc-off-email').classList.add('gc-input-error');
       hasError = true;
     }
-    if (!phone) {
+    if (!document.getElementById('gc-off-phone').value.trim()) {
       document.getElementById('gc-off-phone-error').style.display = 'block';
       document.getElementById('gc-off-phone').classList.add('gc-input-error');
       hasError = true;
