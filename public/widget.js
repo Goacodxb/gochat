@@ -162,7 +162,7 @@
       border-radius: 8px; font-size: 12px; color: #0f1d3a;
       cursor: pointer; margin-top: 2px;
     }
-    #gc-visitor-end-btn:hover { background:#0f1d3a; color:#ffffff; border-color:#0f1d3a; }
+    #gc-visitor-end-btn:hover { background: #0f1d3a; color: #ffffff; border-color: #0f1d3a; }
     #gc-offline-fields { display: flex; flex-direction: column; gap: 10px; }
     .gc-offline-input {
       width: 100%; padding: 9px 12px; border: 1px solid #e5e7eb;
@@ -200,7 +200,7 @@
   widget.innerHTML = `
     <div id="gc-header">
       <div id="gc-header-left">
-          <div id="gc-avatar">
+        <div id="gc-avatar">
           <img src="https://raw.githubusercontent.com/Goacodxb/gochat/main/public/img/goidentity.png" alt="GoIdentity" onerror="this.parentElement.innerHTML='🏢'">
         </div>
         <div>
@@ -272,7 +272,7 @@
         </div>
         <div id="gc-ended-box">
           <p>✅ Chat ended. Thank you for contacting GoIdentity!</p>
-          <p style="font-size:12px;color:#6b7280;margin-top:4px">Our team will follow up via email if needed.</p>
+          <p style="font-size:12px;color:#94a3b8;margin-top:4px">Our team will follow up via email if needed.</p>
         </div>
         <p id="gc-chat-status"></p>
       </div>
@@ -280,7 +280,7 @@
       <!-- Offline form -->
       <div id="gc-offline" style="display:none">
         <div id="gc-welcome-msg" style="border-left-color:#f59e0b;background:#fffbeb;padding-left:10px">
-          <p style="color:#92400e">We're currently offline. Leave your details and we'll get back to you soon.</p>
+          <p style="color:#92400e">⏰ We're currently offline. Leave your details and we'll get back to you soon.</p>
         </div>
         <div id="gc-offline-fields">
           <div>
@@ -405,10 +405,8 @@
   document.getElementById('gc-send').addEventListener('click', function () {
     var name  = document.getElementById('gc-name').value.trim();
     var email = document.getElementById('gc-email').value.trim();
-    var phone = document.getElementById('gc-phone-code').value + document.getElementById('gc-phone').value.trim();
     var msg   = document.getElementById('gc-first-msg').value.trim();
 
-    // Clear errors
     document.querySelectorAll('.gc-field-error').forEach(function (el) { el.style.display = 'none'; });
     ['gc-name','gc-email','gc-phone','gc-first-msg'].forEach(function(id) {
       document.getElementById(id).classList.remove('gc-input-error');
@@ -427,7 +425,7 @@
       hasError = true;
     }
     var phoneCode = document.getElementById('gc-phone-code').value;
-    var phoneNum = document.getElementById('gc-phone').value.trim();
+    var phoneNum  = document.getElementById('gc-phone').value.trim();
     var phoneError = validatePhone(phoneCode, phoneNum);
     if (!phoneNum) {
       document.getElementById('gc-phone-error').textContent = 'Please enter your phone number.';
@@ -447,6 +445,7 @@
     }
     if (hasError) return;
 
+    var phone = phoneCode + phoneNum;
     visitorName = name;
     var btn = document.getElementById('gc-send');
     btn.disabled = true;
@@ -494,6 +493,7 @@
 
   // ── Session closed ─────────────────────────────────────
   function onSessionClosed() {
+    if (sessionClosed) return;
     sessionClosed = true;
     document.getElementById('gc-chat-input').classList.remove('active');
     document.getElementById('gc-waiting-box').style.display = 'none';
@@ -565,11 +565,22 @@
     ws.onclose = function () { wsConnected = false; startMessagePolling(); };
   }
 
-  // ── Long-poll fallback ─────────────────────────────────
+  // ── Long-poll fallback + session status check ──────────
   function startMessagePolling() {
     if (messagePoller || wsConnected) return;
     messagePoller = setInterval(function () {
       if (!sessionId || wsConnected) return;
+
+      // ── Check if session was closed from Teams side ──
+      fetch(BACKEND_URL + '/api/sessions/' + sessionId + '/status')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.status === 'closed' && !sessionClosed) {
+            onSessionClosed();
+          }
+        }).catch(console.error);
+
+      // ── Fetch new messages ──
       fetch(BACKEND_URL + '/api/sessions/' + sessionId + '/messages?since=' + encodeURIComponent(lastMessageTime))
         .then(function (r) { return r.json(); })
         .then(function (d) {
@@ -612,12 +623,11 @@
   document.getElementById('gc-off-send').addEventListener('click', function () {
     var name  = document.getElementById('gc-off-name').value.trim();
     var email = document.getElementById('gc-off-email').value.trim();
-    var phone = document.getElementById('gc-off-phone').value.trim();
     var msg   = document.getElementById('gc-off-msg').value.trim();
+    var offPhoneCode = document.getElementById('gc-off-phone-code').value;
+    var offPhoneNum  = document.getElementById('gc-off-phone').value.trim();
+    var phone = offPhoneCode + offPhoneNum;
 
-    var phone = document.getElementById('gc-off-phone-code').value + document.getElementById('gc-off-phone').value.trim();
-
-    // Clear all offline errors
     document.querySelectorAll('.gc-offline-error').forEach(function(el) { el.style.display = 'none'; });
     ['gc-off-name','gc-off-email','gc-off-phone','gc-off-msg'].forEach(function(id) {
       document.getElementById(id).classList.remove('gc-input-error');
@@ -635,8 +645,6 @@
       document.getElementById('gc-off-email').classList.add('gc-input-error');
       hasError = true;
     }
-    var offPhoneCode = document.getElementById('gc-off-phone-code').value;
-    var offPhoneNum = document.getElementById('gc-off-phone').value.trim();
     var offPhoneError = validatePhone(offPhoneCode, offPhoneNum);
     if (!offPhoneNum) {
       document.getElementById('gc-off-phone-error').textContent = 'Please enter your phone number.';
@@ -684,20 +692,20 @@
   // ── Phone validation by country code ──────────────────
   function validatePhone(code, number) {
     var rules = {
-      '+971': { min: 9, max: 9, hint: '9 digits (e.g. 501234567)' },       // UAE
-      '+91':  { min: 10, max: 10, hint: '10 digits (e.g. 9876543210)' },   // India
-      '+44':  { min: 10, max: 10, hint: '10 digits (e.g. 7911123456)' },   // UK
-      '+1':   { min: 10, max: 10, hint: '10 digits (e.g. 2025551234)' },   // USA
-      '+92':  { min: 10, max: 10, hint: '10 digits (e.g. 3001234567)' },   // Pakistan
-      '+966': { min: 9, max: 9, hint: '9 digits (e.g. 512345678)' },       // Saudi
-      '+974': { min: 8, max: 8, hint: '8 digits (e.g. 33123456)' },        // Qatar
-      '+973': { min: 8, max: 8, hint: '8 digits (e.g. 36001234)' },        // Bahrain
-      '+968': { min: 8, max: 8, hint: '8 digits (e.g. 92345678)' },        // Oman
-      '+965': { min: 8, max: 8, hint: '8 digits (e.g. 51234567)' },        // Kuwait
-      '+20':  { min: 10, max: 10, hint: '10 digits (e.g. 1012345678)' },   // Egypt
-      '+49':  { min: 10, max: 11, hint: '10-11 digits' },                   // Germany
-      '+33':  { min: 9, max: 9, hint: '9 digits (e.g. 612345678)' },       // France
-      '+61':  { min: 9, max: 9, hint: '9 digits (e.g. 412345678)' },       // Australia
+      '+971': { min: 9,  max: 9,  hint: '9 digits (e.g. 501234567)' },
+      '+91':  { min: 10, max: 10, hint: '10 digits (e.g. 9876543210)' },
+      '+44':  { min: 10, max: 10, hint: '10 digits (e.g. 7911123456)' },
+      '+1':   { min: 10, max: 10, hint: '10 digits (e.g. 2025551234)' },
+      '+92':  { min: 10, max: 10, hint: '10 digits (e.g. 3001234567)' },
+      '+966': { min: 9,  max: 9,  hint: '9 digits (e.g. 512345678)' },
+      '+974': { min: 8,  max: 8,  hint: '8 digits (e.g. 33123456)' },
+      '+973': { min: 8,  max: 8,  hint: '8 digits (e.g. 36001234)' },
+      '+968': { min: 8,  max: 8,  hint: '8 digits (e.g. 92345678)' },
+      '+965': { min: 8,  max: 8,  hint: '8 digits (e.g. 51234567)' },
+      '+20':  { min: 10, max: 10, hint: '10 digits (e.g. 1012345678)' },
+      '+49':  { min: 10, max: 11, hint: '10-11 digits' },
+      '+33':  { min: 9,  max: 9,  hint: '9 digits (e.g. 612345678)' },
+      '+61':  { min: 9,  max: 9,  hint: '9 digits (e.g. 412345678)' },
     };
     var n = number.replace(/\s/g, '');
     if (!/^[0-9]+$/.test(n)) return 'Please enter digits only.';
