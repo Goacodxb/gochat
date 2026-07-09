@@ -509,7 +509,7 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`GoChat server running on port ${PORT}`));
 
 // ── Auto-release idle claimed sessions (every 2 minutes)
-const AUTO_RELEASE_MINUTES = 10;
+const AUTO_RELEASE_MINUTES = 3;
 setInterval(async () => {
   try {
     const result = await pool.query(`
