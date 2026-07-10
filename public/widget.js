@@ -430,7 +430,7 @@
     document.getElementById('gc-waiting-box').style.display = 'block';
     document.getElementById('gc-status-dot').style.background = '#f59e0b';
     document.getElementById('gc-status-text').textContent = 'Waiting for an agent...';
-    addSystemMessage('⏳ Agent disconnected. Please wait while we connect you to another agent...');
+    addSystemMessage('⏳ Our agent is busy assisting another customer. Connecting you to the next available agent');
   }
 
   // ── Session closed ─────────────────────────────────────
