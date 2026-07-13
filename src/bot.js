@@ -173,6 +173,26 @@ class GoChatBot extends ActivityHandler {
         return;
       }
 
+      // Handle /reassign
+      if (text.includes('/reassign')) {
+        await pool.query(
+          `UPDATE sessions SET status='waiting', claimed_by=NULL, claimed_by_id=NULL, updated_at=NOW() WHERE id=$1`,
+          [sessionId]
+        );
+        broadcastToSession(sessionId, {
+          type: 'agent_left',
+          agentName: from
+        });
+        console.log('Session reassigned by:', from);
+        await postToThread(
+          teamsConversationId,
+          messageId,
+          `🔄 Chat has been reassigned by ${from}. Any available agent can now claim this conversation.`
+        );
+        await next();
+        return;
+      }
+
       // Handle /close or /end
       if (text.includes('/close') || text.includes('/end')) {
         await pool.query(
