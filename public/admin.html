@@ -304,6 +304,14 @@ function closeSidebar() { document.getElementById('sidebar').classList.remove('o
 
 function logout() {
   if (!confirm('log out of gochat admin?')) return;
+  // Set agent offline before logging out
+  if (agentName && secret) {
+    fetch('/api/admin/availability', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-secret':secret},
+      body: JSON.stringify({online: false, agentName: agentName})
+    }).catch(()=>{});
+  }
   secret = ''; agentName = ''; allSessions = []; allLeads = []; filtered = [];
   document.getElementById('appScreen').style.display   = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
@@ -358,6 +366,13 @@ function login() {
       document.getElementById('sidebarAgentName').textContent   = agentName;
       document.getElementById('sidebarAgentAvatar').textContent = initials(agentName);
 
+      // Auto set agent ONLINE when they log in
+      fetch('/api/admin/availability', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','x-admin-secret':secret},
+        body: JSON.stringify({online: true, agentName: agentName})
+      }).then(()=> loadAvailability());
+
       loadAll();
       setInterval(loadAll, 10000);
     })
@@ -369,15 +384,31 @@ function loadAll() { loadSessions(); loadLeads(); loadAvailability(); }
 function loadAvailability() {
   fetch('/api/availability').then(r=>r.json()).then(d => {
     availability = d.online;
-    document.getElementById('availText').textContent = d.online ? 'online' : 'offline';
     document.getElementById('availPill').className = 'avail-pill ' + (d.online ? 'online' : 'offline');
   }).catch(()=>{});
+
+  // Load per-agent status to show current agent's status
+  if (secret && agentName) {
+    fetch('/api/admin/agents-online', { headers: {'x-admin-secret': secret} })
+      .then(r=>r.json()).then(d => {
+        const agents = d.agents || [];
+        const me = agents.find(a => a.agent_name === agentName);
+        const myStatus = me ? me.is_online : false;
+        const onlineCount = agents.filter(a => a.is_online).length;
+        availability = myStatus;
+        document.getElementById('availPill').className = 'avail-pill ' + (myStatus ? 'online' : 'offline');
+        document.getElementById('availText').textContent = myStatus
+          ? `online (${onlineCount} agent${onlineCount!==1?'s':''})`
+          : 'offline';
+      }).catch(()=>{});
+  }
 }
 
 function toggleAvailability() {
   fetch('/api/admin/availability', {
-    method:'POST', headers:{'Content-Type':'application/json','x-admin-secret':secret},
-    body: JSON.stringify({online: !availability})
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-admin-secret':secret},
+    body: JSON.stringify({online: !availability, agentName: agentName})
   }).then(()=> loadAvailability());
 }
 
