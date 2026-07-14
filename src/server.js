@@ -57,14 +57,23 @@ wss.on('connection', (ws, req) => {
   ws.on('error', console.error);
 });
 
-// ── GET /api/availability
+// ── GET /api/availability — checks if ANY agent is online
 app.get('/api/availability', async (req, res) => {
   try {
-    const result = await pool.query('SELECT is_online FROM availability WHERE id = 1');
-    res.json({ online: result.rows[0]?.is_online ?? false });
+    const result = await pool.query(
+      `SELECT COUNT(*) as online_count FROM agent_availability 
+       WHERE is_online = true 
+       AND updated_at > NOW() - INTERVAL '1 hour'`
+    );
+    res.json({ online: parseInt(result.rows[0].online_count) > 0 });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    // Fallback to old availability table if new table doesn't exist yet
+    try {
+      const fallback = await pool.query('SELECT is_online FROM availability WHERE id = 1');
+      res.json({ online: fallback.rows[0]?.is_online ?? false });
+    } catch (e) {
+      res.json({ online: false });
+    }
   }
 });
 
@@ -283,12 +292,38 @@ app.post('/api/admin/close', adminAuth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Failed to close session' }); }
 });
 
+// ── POST /api/admin/availability — per-agent availability
 app.post('/api/admin/availability', adminAuth, async (req, res) => {
-  const { online } = req.body;
+  const { online, agentName } = req.body;
+  if (!agentName) return res.status(400).json({ error: 'agentName required' });
   try {
-    await pool.query('UPDATE availability SET is_online = $1, updated_at = NOW() WHERE id = 1', [!!online]);
-    res.json({ ok: true, online: !!online });
-  } catch (err) { res.status(500).json({ error: 'Database error' }); }
+    await pool.query(
+      `INSERT INTO agent_availability (agent_name, is_online, updated_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (agent_name) DO UPDATE SET is_online = $2, updated_at = NOW()`,
+      [agentName, !!online]
+    );
+    const result = await pool.query(
+      `SELECT COUNT(*) as online_count FROM agent_availability WHERE is_online = true`
+    );
+    const anyOnline = parseInt(result.rows[0].online_count) > 0;
+    res.json({ ok: true, online: !!online, anyOnline });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+// ── GET /api/admin/agents-online — get all agents status
+app.get('/api/admin/agents-online', adminAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT agent_name, is_online, updated_at FROM agent_availability ORDER BY updated_at DESC`
+    );
+    res.json({ agents: result.rows });
+  } catch (err) {
+    res.status(500).json({ error: 'Database error' });
+  }
 });
 
 app.get('/admin', (req, res) => {
@@ -431,22 +466,18 @@ async function postToTeams(sessionId, name, email, message) {
 async function replyToTeamsThread(session, message, senderName) {
   console.log('Sending visitor follow-up to Teams:', message);
 
-  // Build @mention if we have agent's Teams ID
   const agentId = session.claimed_by_id;
   const agentName = session.claimed_by;
-  
+
   let mentionText = '';
   let entities = [];
-  
+
   if (agentId && agentName) {
     mentionText = `<at>${agentName}</at> `;
     entities = [{
       type: 'mention',
       text: `<at>${agentName}</at>`,
-      mentioned: {
-        id: agentId,
-        name: agentName
-      }
+      mentioned: { id: agentId, name: agentName }
     }];
   }
 
@@ -471,7 +502,6 @@ async function replyToTeamsThread(session, message, senderName) {
       const token = await getBotToken();
       const threadConversationId = activityId ? `${conversationId};messageid=${activityId}` : conversationId;
 
-      // Post with @mention if agent ID is available, otherwise just adaptive card
       const messageBody = agentId ? {
         type: 'message',
         text: `${mentionText}New message from ${senderName}: "${message}"`,
@@ -508,13 +538,13 @@ function extractSessionFromText(text) {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`GoChat server running on port ${PORT}`));
 
-// ── Auto-release idle claimed sessions (every 2 minutes)
-const AUTO_RELEASE_MINUTES = 3;
+// ── Auto-release idle claimed sessions
+const AUTO_RELEASE_MINUTES = 5;
 setInterval(async () => {
   try {
     const result = await pool.query(`
       UPDATE sessions
-      SET status = 'waiting', claimed_by = NULL, updated_at = NOW()
+      SET status = 'waiting', claimed_by = NULL, claimed_by_id = NULL, updated_at = NOW()
       WHERE status = 'active'
       AND updated_at < NOW() - INTERVAL '${AUTO_RELEASE_MINUTES} minutes'
       RETURNING id, visitor_name, claimed_by
@@ -522,10 +552,10 @@ setInterval(async () => {
     if (result.rows.length > 0) {
       result.rows.forEach(session => {
         console.log('Auto-released idle session:', session.id);
-        broadcastToSession(session.id, { type: 'agent_left' });
+        broadcastToSession(session.id, { type: 'agent_left', agentName: session.claimed_by });
       });
     }
   } catch (err) {
     console.error('Auto-release error:', err.message);
   }
-}, 2 * 60 * 1000);
+}, 30 * 1000); // check every 30 seconds
