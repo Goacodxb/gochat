@@ -74,7 +74,7 @@ class GoChatBot extends ActivityHandler {
       text = text.replace(/<at>[^<]*<\/at>/gi, '').trim();
 
       // Ignore empty or bot confirmation messages
-      if (!text || text.startsWith('✅') || text.startsWith('❌') || text.startsWith('⚠️') || text.startsWith('👋') || text.startsWith('💬') || text.startsWith('🚫') || text.startsWith('⏰')) {
+      if (!text || text.startsWith('✅') || text.startsWith('❌') || text.startsWith('⚠️') || text.startsWith('👋') || text.startsWith('💬') || text.startsWith('🚫') || text.startsWith('⏰') || text.startsWith('⭕') || text.startsWith('🔄')) {
         await next();
         return;
       }
@@ -93,15 +93,27 @@ class GoChatBot extends ActivityHandler {
 
       // Handle commands
       if (text === '/goonline') {
-        await pool.query('UPDATE availability SET is_online = true, updated_at = NOW() WHERE id = 1');
-        console.log('GoChat set ONLINE');
+        await pool.query(
+          `INSERT INTO agent_availability (agent_name, is_online, updated_at)
+           VALUES ($1, true, NOW())
+           ON CONFLICT (agent_name) DO UPDATE SET is_online = true, updated_at = NOW()`,
+          [from]
+        );
+        console.log(from, 'set ONLINE');
+        await postToThread(teamsConversationId, messageId, `✅ ${from} is now ONLINE`);
         await next();
         return;
       }
 
       if (text === '/gooffline') {
-        await pool.query('UPDATE availability SET is_online = false, updated_at = NOW() WHERE id = 1');
-        console.log('GoChat set OFFLINE');
+        await pool.query(
+          `INSERT INTO agent_availability (agent_name, is_online, updated_at)
+           VALUES ($1, false, NOW())
+           ON CONFLICT (agent_name) DO UPDATE SET is_online = false, updated_at = NOW()`,
+          [from]
+        );
+        console.log(from, 'set OFFLINE');
+        await postToThread(teamsConversationId, messageId, `⭕ ${from} is now OFFLINE`);
         await next();
         return;
       }
