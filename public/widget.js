@@ -244,7 +244,7 @@
       <!-- Offline form -->
       <div id="gc-offline" style="display:none">
         <div id="gc-welcome-msg" style="border-left-color:#f59e0b;background:#fffbeb;padding-left:10px">
-          <p style="color:#92400e">We're currently offline. Leave your details and we'll get back to you soon.</p>
+          <p style="color:#92400e">⏰ We're currently offline. Leave your details and we'll get back to you soon.</p>
         </div>
         <div id="gc-offline-fields">
           <div>
@@ -343,6 +343,54 @@
   availabilityPoller = setInterval(checkAvailability, POLL_INTERVAL);
   checkAvailability();
 
+  // ── Restore session after page refresh ─────────────────
+  (function restoreSession() {
+    var savedSessionId = localStorage.getItem('gc_sessionId');
+    var savedName = localStorage.getItem('gc_visitorName');
+    if (!savedSessionId || !savedName) return;
+
+    fetch(BACKEND_URL + '/api/sessions/' + savedSessionId + '/status')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.status === 'active' || d.status === 'waiting') {
+          // Session still open — restore chat
+          sessionId = savedSessionId;
+          visitorName = savedName;
+          document.getElementById('gc-prechat').style.display = 'none';
+          document.getElementById('gc-offline').style.display = 'none';
+          document.getElementById('gc-chat').style.display = '';
+          document.getElementById('gc-waiting-box').style.display = d.status === 'waiting' ? 'block' : 'none';
+
+          // Load previous messages
+          fetch(BACKEND_URL + '/api/sessions/' + savedSessionId + '/messages?since=1970-01-01')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              (data.messages || []).forEach(function(m) {
+                if (m.sender_type === 'agent') {
+                  if (!agentJoined) onAgentJoined(m.sender_name || 'Agent');
+                  addMessage('agent', m.sender_name, m.content);
+                } else {
+                  addMessage('visitor', m.sender_name, m.content);
+                }
+                lastMessageTime = m.created_at;
+              });
+            });
+
+          connectWebSocket();
+          widget.classList.add('open');
+          launcher.innerHTML = '×';
+        } else {
+          // Session closed — clear localStorage
+          localStorage.removeItem('gc_sessionId');
+          localStorage.removeItem('gc_visitorName');
+        }
+      })
+      .catch(function() {
+        localStorage.removeItem('gc_sessionId');
+        localStorage.removeItem('gc_visitorName');
+      });
+  })();
+
   // ── Start chat (Online) ────────────────────────────────
   document.getElementById('gc-send').addEventListener('click', function () {
     var name  = document.getElementById('gc-name').value.trim();
@@ -387,6 +435,10 @@
       .then(function (d) {
         if (!d.sessionId) throw new Error('No session ID returned');
         sessionId = d.sessionId;
+        visitorName = name;
+        // Save to localStorage for page refresh restore
+        localStorage.setItem('gc_sessionId', sessionId);
+        localStorage.setItem('gc_visitorName', name);
         showChatView(name, msg);
         connectWebSocket();
       })
@@ -430,13 +482,16 @@
     document.getElementById('gc-waiting-box').style.display = 'block';
     document.getElementById('gc-status-dot').style.background = '#f59e0b';
     document.getElementById('gc-status-text').textContent = 'Waiting for an agent...';
-    addSystemMessage('⏳ Our agent is busy assisting another customer. Connecting you to the next available agent');
+    addSystemMessage('⏳ Agent disconnected. Please wait while we connect you to another agent...');
   }
 
   // ── Session closed ─────────────────────────────────────
   function onSessionClosed() {
     if (sessionClosed) return;
     sessionClosed = true;
+    // Clear saved session
+    localStorage.removeItem('gc_sessionId');
+    localStorage.removeItem('gc_visitorName');
     document.getElementById('gc-chat-input').classList.remove('active');
     document.getElementById('gc-waiting-box').style.display = 'none';
     document.getElementById('gc-ended-box').style.display = 'block';
@@ -563,6 +618,28 @@
   }
 
   // ── Offline lead form ──────────────────────────────────
+
+  // Restore offline form data after refresh
+  (function restoreOfflineForm() {
+    var savedName  = localStorage.getItem('gc_off_name');
+    var savedEmail = localStorage.getItem('gc_off_email');
+    var savedMsg   = localStorage.getItem('gc_off_msg');
+    if (savedName)  document.getElementById('gc-off-name').value  = savedName;
+    if (savedEmail) document.getElementById('gc-off-email').value = savedEmail;
+    if (savedMsg)   document.getElementById('gc-off-msg').value   = savedMsg;
+  })();
+
+  // Save offline form as visitor types
+  document.getElementById('gc-off-name').addEventListener('input', function() {
+    localStorage.setItem('gc_off_name', this.value);
+  });
+  document.getElementById('gc-off-email').addEventListener('input', function() {
+    localStorage.setItem('gc_off_email', this.value);
+  });
+  document.getElementById('gc-off-msg').addEventListener('input', function() {
+    localStorage.setItem('gc_off_msg', this.value);
+  });
+
   document.getElementById('gc-off-send').addEventListener('click', function () {
     var name  = document.getElementById('gc-off-name').value.trim();
     var email = document.getElementById('gc-off-email').value.trim();
@@ -602,6 +679,10 @@
       body: JSON.stringify({ name: name, email: email, message: msg }),
     })
       .then(function () {
+        // Clear localStorage after successful submit
+        localStorage.removeItem('gc_off_name');
+        localStorage.removeItem('gc_off_email');
+        localStorage.removeItem('gc_off_msg');
         document.getElementById('gc-offline-fields').style.display = 'none';
         document.getElementById('gc-off-success').style.display = 'block';
       })
