@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   visitor_email VARCHAR(255) NOT NULL,
   status VARCHAR(50) NOT NULL DEFAULT 'waiting',
   claimed_by VARCHAR(255),
+  claimed_by_id VARCHAR(255),
   teams_thread_id VARCHAR(500),
   teams_activity_id VARCHAR(500),
   teams_conversation_ref TEXT,
@@ -40,10 +41,18 @@ CREATE TABLE IF NOT EXISTS leads (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS agent_availability (
+  agent_name VARCHAR(255) PRIMARY KEY,
+  is_online BOOLEAN DEFAULT false,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes
 CREATE INDEX IF NOT EXISTS idx_messages_session_id ON messages(session_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
 CREATE INDEX IF NOT EXISTS idx_sessions_created_at ON sessions(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads(created_at DESC);
 
--- Ensure teams_conversation_ref exists for existing databases
+-- Add missing columns for existing databases
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS teams_conversation_ref TEXT;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS claimed_by_id VARCHAR(255);
