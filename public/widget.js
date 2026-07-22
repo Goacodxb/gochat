@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  var BACKEND_URL = 'https://gochat-mzup.onrender.com';
+var BACKEND_URL = 'https://gochat-production-0f6f.up.railway.app';
   var POLL_INTERVAL = 30000;
   var MESSAGE_POLL = 3000;
   var sessionId = null;
