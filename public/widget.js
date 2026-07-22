@@ -1,10 +1,8 @@
 (function () {
   'use strict';
-
   var BACKEND_URL = 'https://gochat-mzup.onrender.com';
   var POLL_INTERVAL = 30000;
   var MESSAGE_POLL = 3000;
-
   var sessionId = null;
   var visitorName = null;
   var lastMessageTime = new Date().toISOString();
@@ -15,6 +13,7 @@
   var agentJoined = false;
   var sessionClosed = false;
   var currentAgent = null;
+  var SVG_ICON = '<img src="' + BACKEND_URL + '/img/Comp 1.svg" style="width:36px;height:36px;object-fit:contain;" alt="Chat">';
 
   var style = document.createElement('style');
   style.textContent = `
@@ -175,7 +174,7 @@
 
   var launcher = document.createElement('button');
   launcher.id = 'gc-launcher';
-  launcher.innerHTML = '💬';
+  launcher.innerHTML = SVG_ICON;
   launcher.setAttribute('aria-label', 'Open chat');
 
   var widget = document.createElement('div');
@@ -187,7 +186,7 @@
     <div id="gc-header">
       <div id="gc-header-left">
         <div id="gc-avatar">
-          <img src="https://raw.githubusercontent.com/Goacodxb/gochat/main/public/img/goidentity.png" alt="GoIdentity" onerror="this.parentElement.innerHTML='🏢'">
+          <img src="${BACKEND_URL}/img/Comp_1.svg" alt="GoIdentity" onerror="this.parentElement.innerHTML='🏢'">
         </div>
         <div>
           <h3>GoIdentity Support</h3>
@@ -202,7 +201,6 @@
       </div>
     </div>
     <div id="gc-body">
-
       <!-- Pre-chat form (Online) -->
       <div id="gc-prechat">
         <div id="gc-welcome-msg">
@@ -225,7 +223,6 @@
           <div id="gc-privacy">🔒 Your information is secure and private</div>
         </div>
       </div>
-
       <!-- Live chat view -->
       <div id="gc-chat" style="display:none">
         <div id="gc-messages"></div>
@@ -240,11 +237,10 @@
         </div>
         <p id="gc-chat-status"></p>
       </div>
-
       <!-- Offline form -->
       <div id="gc-offline" style="display:none">
         <div id="gc-welcome-msg" style="border-left-color:#f59e0b;background:#fffbeb;padding-left:10px">
-          <p style="color:#92400e"> We're currently offline. Leave your details and we'll get back to you soon.</p>
+          <p style="color:#92400e">⏰ We're currently offline. Leave your details and we'll get back to you soon.</p>
         </div>
         <div id="gc-offline-fields">
           <div>
@@ -264,9 +260,7 @@
         </div>
         <p id="gc-off-success">✅ Thanks! A member of our team will be in touch soon.</p>
       </div>
-
     </div>
-
     <!-- Chat input — hidden until agent joins -->
     <div id="gc-chat-input">
       <div id="gc-chat-input-row">
@@ -286,7 +280,7 @@
     var isOpen = widget.classList.contains('open');
     if (isOpen) {
       widget.classList.remove('open');
-      launcher.innerHTML = '💬';
+      launcher.innerHTML = SVG_ICON;
     } else {
       widget.classList.add('open');
       launcher.innerHTML = '×';
@@ -296,7 +290,7 @@
 
   document.getElementById('gc-close').addEventListener('click', function () {
     widget.classList.remove('open');
-    launcher.innerHTML = '💬';
+    launcher.innerHTML = SVG_ICON;
   });
 
   // ── End chat ───────────────────────────────────────────
@@ -348,20 +342,16 @@
     var savedSessionId = localStorage.getItem('gc_sessionId');
     var savedName = localStorage.getItem('gc_visitorName');
     if (!savedSessionId || !savedName) return;
-
     fetch(BACKEND_URL + '/api/sessions/' + savedSessionId + '/status')
       .then(function(r) { return r.json(); })
       .then(function(d) {
         if (d.status === 'active' || d.status === 'waiting') {
-          // Session still open — restore chat
           sessionId = savedSessionId;
           visitorName = savedName;
           document.getElementById('gc-prechat').style.display = 'none';
           document.getElementById('gc-offline').style.display = 'none';
           document.getElementById('gc-chat').style.display = '';
           document.getElementById('gc-waiting-box').style.display = d.status === 'waiting' ? 'block' : 'none';
-
-          // Load previous messages
           fetch(BACKEND_URL + '/api/sessions/' + savedSessionId + '/messages?since=1970-01-01')
             .then(function(r) { return r.json(); })
             .then(function(data) {
@@ -375,12 +365,10 @@
                 lastMessageTime = m.created_at;
               });
             });
-
           connectWebSocket();
           widget.classList.add('open');
           launcher.innerHTML = '×';
         } else {
-          // Session closed — clear localStorage
           localStorage.removeItem('gc_sessionId');
           localStorage.removeItem('gc_visitorName');
         }
@@ -396,12 +384,10 @@
     var name  = document.getElementById('gc-name').value.trim();
     var email = document.getElementById('gc-email').value.trim();
     var msg   = document.getElementById('gc-first-msg').value.trim();
-
     document.querySelectorAll('.gc-field-error').forEach(function (el) { el.style.display = 'none'; });
     ['gc-name', 'gc-email', 'gc-first-msg'].forEach(function(id) {
       document.getElementById(id).classList.remove('gc-input-error');
     });
-
     var hasError = false;
     if (!name) {
       document.getElementById('gc-name-error').style.display = 'block';
@@ -420,12 +406,10 @@
       hasError = true;
     }
     if (hasError) return;
-
     visitorName = name;
     var btn = document.getElementById('gc-send');
     btn.disabled = true;
     btn.textContent = '⏳ Connecting...';
-
     fetch(BACKEND_URL + '/api/sessions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -436,7 +420,6 @@
         if (!d.sessionId) throw new Error('No session ID returned');
         sessionId = d.sessionId;
         visitorName = name;
-        // Save to localStorage for page refresh restore
         localStorage.setItem('gc_sessionId', sessionId);
         localStorage.setItem('gc_visitorName', name);
         showChatView(name, msg);
@@ -454,13 +437,12 @@
   function showChatView(name, firstMsg) {
     document.getElementById('gc-prechat').style.display = 'none';
     document.getElementById('gc-chat').style.display = '';
-    addMessage('visitor', name, firstMsg);
+    if (firstMsg) addMessage('visitor', name, firstMsg);
     document.getElementById('gc-waiting-box').style.display = 'block';
   }
 
   // ── Agent joined ───────────────────────────────────────
   function onAgentJoined(agentName) {
-    // If same agent re-joining after auto-release — don't show join message again
     if (agentJoined && currentAgent === agentName) return;
     agentJoined = true;
     currentAgent = agentName;
@@ -474,7 +456,6 @@
 
   // ── Agent left (auto-release) ──────────────────────────
   function onAgentLeft() {
-    // Only trigger if agent was actually joined
     if (!agentJoined) return;
     agentJoined = false;
     currentAgent = null;
@@ -489,7 +470,6 @@
   function onSessionClosed() {
     if (sessionClosed) return;
     sessionClosed = true;
-    // Clear saved session
     localStorage.removeItem('gc_sessionId');
     localStorage.removeItem('gc_visitorName');
     document.getElementById('gc-chat-input').classList.remove('active');
@@ -506,10 +486,8 @@
     var content = input.value.trim();
     var abuseEl = document.getElementById('gc-abuse-error');
     if (!content || !sessionId || sessionClosed) return;
-
     abuseEl.style.display = 'none';
     input.value = '';
-
     fetch(BACKEND_URL + '/api/sessions/' + sessionId + '/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -569,16 +547,12 @@
     if (messagePoller || wsConnected) return;
     messagePoller = setInterval(function () {
       if (!sessionId || wsConnected) return;
-
-      // Check session status
       fetch(BACKEND_URL + '/api/sessions/' + sessionId + '/status')
         .then(function(r) { return r.json(); })
         .then(function(d) {
           if (d.status === 'closed' && !sessionClosed) onSessionClosed();
           if (d.status === 'waiting' && agentJoined) onAgentLeft();
         }).catch(console.error);
-
-      // Fetch new messages
       fetch(BACKEND_URL + '/api/sessions/' + sessionId + '/messages?since=' + encodeURIComponent(lastMessageTime))
         .then(function (r) { return r.json(); })
         .then(function (d) {
@@ -618,8 +592,6 @@
   }
 
   // ── Offline lead form ──────────────────────────────────
-
-  // Restore offline form data after refresh
   (function restoreOfflineForm() {
     var savedName  = localStorage.getItem('gc_off_name');
     var savedEmail = localStorage.getItem('gc_off_email');
@@ -629,7 +601,6 @@
     if (savedMsg)   document.getElementById('gc-off-msg').value   = savedMsg;
   })();
 
-  // Save offline form as visitor types
   document.getElementById('gc-off-name').addEventListener('input', function() {
     localStorage.setItem('gc_off_name', this.value);
   });
@@ -644,12 +615,10 @@
     var name  = document.getElementById('gc-off-name').value.trim();
     var email = document.getElementById('gc-off-email').value.trim();
     var msg   = document.getElementById('gc-off-msg').value.trim();
-
     document.querySelectorAll('.gc-offline-error').forEach(function(el) { el.style.display = 'none'; });
     ['gc-off-name','gc-off-email','gc-off-msg'].forEach(function(id) {
       document.getElementById(id).classList.remove('gc-input-error');
     });
-
     var hasError = false;
     if (!name) {
       document.getElementById('gc-off-name-error').style.display = 'block';
@@ -668,18 +637,15 @@
       hasError = true;
     }
     if (hasError) return;
-
     var btn = document.getElementById('gc-off-send');
     btn.disabled = true;
     btn.textContent = 'Sending...';
-
     fetch(BACKEND_URL + '/api/leads', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: name, email: email, message: msg }),
     })
       .then(function () {
-        // Clear localStorage after successful submit
         localStorage.removeItem('gc_off_name');
         localStorage.removeItem('gc_off_email');
         localStorage.removeItem('gc_off_msg');
