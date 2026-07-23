@@ -30,11 +30,7 @@
       transition: transform 0.2s;
     }
     #gc-launcher:hover { transform: scale(1.08); }
-    #gc-online-dot {
-      position: fixed; bottom: 62px; right: 24px; z-index: 10000;
-      width: 14px; height: 14px; border-radius: 50%;
-      background: #22c55e; border: 2px solid white; display: none;
-    }
+
     #gc-widget {
       position: fixed; bottom: 90px; right: 24px; z-index: 9998;
       width: 360px; background: white; border-radius: 14px;
@@ -173,8 +169,7 @@
   document.head.appendChild(style);
 
   var onlineDot = document.createElement('div');
-  onlineDot.id = 'gc-online-dot';
-  document.body.appendChild(onlineDot);
+ 
 
   var launcher = document.createElement('button');
   launcher.id = 'gc-launcher';
