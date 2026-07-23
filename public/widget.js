@@ -15,15 +15,15 @@
   var currentAgent = null;
 
   // ── Icons
-  var ONLINE_ICON  = '<img src="' + BACKEND_URL + '/img/Online.png"  style="width:58px;height:58px;object-fit:contain;" alt="Chat">';
-  var OFFLINE_ICON = '<img src="' + BACKEND_URL + '/img/Offline.png" style="width:58px;height:58px;object-fit:contain;" alt="Chat">';
-  var CHAT_ICON    = '<img src="' + BACKEND_URL + '/img/Chating.png" style="width:58px;height:58px;object-fit:contain;" alt="Chat">';
+  var ONLINE_ICON  = '<img src="' + BACKEND_URL + '/img/Online.png"  object-fit:contain;" alt="Chat">';
+  var OFFLINE_ICON = '<img src="' + BACKEND_URL + '/img/Offline.png" object-fit:contain;" alt="Chat">';
+  var CHAT_ICON    = '<img src="' + BACKEND_URL + '/img/Chating.png" object-fit:contain;" alt="Chat">';
 
   var style = document.createElement('style');
   style.textContent = `
     #gc-launcher {
       position: fixed; bottom: 24px; right: 24px; z-index: 9999;
-      width: 58px; height: 58px; border-radius: 50%;
+      width: 110px; height: 110px; border-radius: 50%;
       background: transparent; border: none;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
